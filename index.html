@@ -20,20 +20,32 @@
     // ⚠️ REEMPLAZA ESTE ENLACE CON EL ENLACE REAL DE TU FORMULARIO DE TALLY (Debe incluir tu /r/XXXXXX)
     const TALLY_URL = "https://tally.so/r/obqGae";
 
+<script>
+    // ⚠️ ASEGÚRATE DE COLOCAR TU ENLACE REAL DE TALLY AQUÍ
+    const TALLY_URL = "https://tally.so";
+
     function obtenerUbicacion() {
-        // Captura automáticamente cualquier texto de la URL (?municipio=Tlahualilo)
         const parametrosActuales = window.location.search; 
 
         if (navigator.geolocation) {
+            // Opciones estrictas para encender el chip GPS físico en cada intento
+            const geoOpciones = { 
+                enableHighAccuracy: true, 
+                timeout: 9000, 
+                maximumAge: 0 // Prohíbe usar ubicaciones guardadas en la memoria
+            };
+
             navigator.geolocation.getCurrentPosition(
                 (position) => {
                     const lat = position.coords.latitude;
                     const lon = position.coords.longitude;
                     
-                    // Une el GPS con tu formulario base
-                    let urlFinal = `${TALLY_URL}?lat=${lat}&lon=${lon}`;
+                    // 💥 TRUCO ANTI-CACHÉ: Creamos un número único basado en la hora exacta (milisegundos)
+                    const cacheBuster = "nocache=" + new Date().getTime();
                     
-                    // Si tu enlace trae un municipio, lo agrega de forma limpia al final
+                    // Construimos la URL uniendo el GPS y el truco anti-caché
+                    let urlFinal = `${TALLY_URL}?lat=${lat}&lon=${lon}&${cacheBuster}`;
+                    
                     if (parametrosActuales) {
                         const limpio = parametrosActuales.replace('?', '');
                         urlFinal += `&${limpio}`;
@@ -42,13 +54,13 @@
                     window.location.href = urlFinal;
                 },
                 (error) => {
-                    // Si el GPS falla o tarda, redirige manteniendo el municipio intacto
+                    console.warn("Error de GPS o permiso denegado:", error.message);
+                    // Si el GPS falla, redirige manteniendo el municipio
                     window.location.href = parametrosActuales ? `${TALLY_URL}${parametrosActuales}` : TALLY_URL;
                 },
-                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 } // Forzar actualización real del GPS
+                geoOpciones
             );
         } else {
-            // Navegador sin soporte de GPS
             window.location.href = parametrosActuales ? `${TALLY_URL}${parametrosActuales}` : TALLY_URL;
         }
     }
@@ -56,6 +68,3 @@
     // Ejecutar al cargar la página
     window.onload = obtenerUbicacion;
 </script>
-
-</body>
-</html>
