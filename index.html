@@ -20,38 +20,40 @@
     // ⚠️ REEMPLAZA EL ENLACE DE ABAJO CON EL ENLACE REAL DE TU FORMULARIO DE TALLY
     const TALLY_URL = "https://tally.so/r/obqGae";
 
-    function obtenerUbicacion() {
-        // Captura los parámetros de la URL actual (ej: ?email=eamm831221@gmail.com)
-        const parametrosActuales = window.location.search; 
+function obtenerUbicacion() {
+    // Esta línea lee AUTOMÁTICAMENTE cualquier parámetro que tú pongas en la URL (?email=...)
+    const parametrosActuales = window.location.search; 
 
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    const lat = position.coords.latitude;
-                    const lon = position.coords.longitude;
-                    
-                    // Construye la URL uniendo el GPS primero
-                    let urlFinal = `${TALLY_URL}?lat=${lat}&lon=${lon}`;
-                    
-                    // Si el enlace de GitHub traía un correo, lo concatena limpiamente al final usando un "&"
-                    if (parametrosActuales) {
-                        const limpio = parametrosActuales.replace('?', '');
-                        urlFinal += `&${limpio}`;
-                    }
-                    
-                    window.location.href = urlFinal;
-                },
-                (error) => {
-                    // Si el usuario rechaza el GPS, va a Tally manteniendo el correo si existe
-                    window.location.href = parametrosActuales ? `${TALLY_URL}${parametrosActuales}` : TALLY_URL;
-                },
-                { enableHighAccuracy: true, timeout: 10000 }
-            );
-        } else {
-            // Navegador no compatible con GPS
-            window.location.href = parametrosActuales ? `${TALLY_URL}${parametrosActuales}` : TALLY_URL;
-        }
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const lat = position.coords.latitude;
+                const lon = position.coords.longitude;
+                
+                // Crea el enlace base con el GPS
+                let urlFinal = `${TALLY_URL}?lat=${lat}&lon=${lon}`;
+                
+                // Si tú pusiste un correo en la URL, el código lo agarra y lo une al GPS aquí
+                if (parametrosActuales) {
+                    const limpio = parametrosActuales.replace('?', '');
+                    urlFinal += `&${limpio}`;
+                }
+                
+                // Redirecciona al formulario correcto
+                window.location.href = urlFinal;
+            },
+            (error) => {
+                // Si no hay GPS, te manda a Tally manteniendo el correo que pusiste
+                window.location.href = parametrosActuales ? `${TALLY_URL}${parametrosActuales}` : TALLY_URL;
+            },
+            { enableHighAccuracy: true, timeout: 10000 }
+        );
+    } else {
+        // Si el navegador no soporta GPS, te manda a Tally manteniendo el correo que pusiste
+        window.location.href = parametrosActuales ? `${TALLY_URL}${parametrosActuales}` : TALLY_URL;
     }
+}
+
 
     // Ejecutar al cargar la página
     window.onload = obtenerUbicacion;
