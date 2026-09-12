@@ -1,0 +1,53 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cargando Formulario...</title>
+    <style>
+        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background-color: #f9f9f9; }
+        .loader { text-align: center; color: #333; }
+    </style>
+</head>
+<body>
+
+<div class="loader">
+    <h2>Abriendo formulario seguro...</h2>
+    <p>Por favor, acepta el permiso de ubicación si el navegador lo solicita.</p>
+</div>
+
+<script>
+    // REEMPLAZA ESTE ENLACE CON EL DE TU FORMULARIO DE TALLY
+    const TALLY_URL = "https://tally.so/r/obqGae";
+
+    function obtenerUbicacion() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    // Éxito: Captura latitud y longitud
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+                    
+                    // Redirecciona a Tally pasando las coordenadas en la URL
+                    window.location.href = `${TALLY_URL}?lat=${lat}&lon=${lon}`;
+                },
+                (error) => {
+                    // Error o Permiso denegado: Redirecciona al formulario vacío
+                    console.warn("Permiso de ubicación denegado o error obtenido.");
+                    window.location.href = TALLY_URL;
+                },
+                { enableHighAccuracy: true, timeout: 10000 } // Alta precisión
+            );
+        } else {
+            // El navegador no soporta geolocalización
+            window.location.href = TALLY_URL;
+        }
+    }
+
+    // Ejecutar la función automáticamente al cargar la página
+    window.onload = obtenerUbicacion;
+</script>
+
+</body>
+</html>
