@@ -21,31 +21,40 @@
     // REEMPLAZA ESTE ENLACE CON EL DE TU FORMULARIO DE TALLY
     const TALLY_URL = "https://tally.so/r/obqGae";
 
-    function obtenerUbicacion() {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    // Éxito: Captura latitud y longitud
-                    const lat = position.coords.latitude;
-                    const lon = position.coords.longitude;
-                    
-                    // Redirecciona a Tally pasando las coordenadas en la URL
-                    window.location.href = `${TALLY_URL}?lat=${lat}&lon=${lon}`;
-                },
-                (error) => {
-                    // Error o Permiso denegado: Redirecciona al formulario vacío
-                    console.warn("Permiso de ubicación denegado o error obtenido.");
-                    window.location.href = TALLY_URL;
-                },
-                { enableHighAccuracy: true, timeout: 10000 } // Alta precisión
-            );
-        } else {
-            // El navegador no soporta geolocalización
-            window.location.href = TALLY_URL;
-        }
-    }
+function obtenerUbicacion() {
+    // 1. Detectar si el enlace de GitHub trae un correo u otros datos
+    const parametrosActuales = window.location.search; 
 
-    // Ejecutar la función automáticamente al cargar la página
+    // REEMPLAZA ESTO CON TU ENLACE REAL DE TALLY
+    const TALLY_BASE = "https://tally.so"; 
+
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const lat = position.coords.latitude;
+                const lon = position.coords.longitude;
+                
+                // Si la URL de GitHub ya trae "?email=...", lo unimos usando "&"
+                let urlFinal = `${TALLY_BASE}?lat=${lat}&lon=${lon}`;
+                if (parametrosActuales) {
+                    // Quita el "?" inicial de los parámetros actuales y los añade al final
+                    urlFinal += `&${parametrosActuales.substring(1)}`;
+                }
+                window.location.href = urlFinal;
+            },
+            (error) => {
+                // Si el usuario deniega el GPS, redirige a Tally manteniendo el correo
+                console.warn("Permiso de ubicación denegado.");
+                window.location.href = parametrosActuales ? `${TALLY_BASE}${parametrosActuales}` : TALLY_BASE;
+            },
+            { enableHighAccuracy: true, timeout: 10000 }
+        );
+    } else {
+        // Navegador antiguo sin GPS: manda a Tally manteniendo el correo
+        window.location.href = parametrosActuales ? `${TALLY_BASE}${parametrosActuales}` : TALLY_BASE;
+    }
+}
+
     window.onload = obtenerUbicacion;
 </script>
 
