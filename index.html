@@ -3,68 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cargando Formulario...</title>
+    <title>Captura de Ubicación GPS</title>
     <style>
-        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background-color: #f9f9f9; }
-        .loader { text-align: center; color: #333; }
+        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background-color: #f0f4f8; padding: 20px; box-sizing: border-box; }
+        .card { background: white; padding: 30px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.08); text-align: center; max-width: 360px; width: 100%; }
+        h2 { color: #1e293b; margin-top: 0; font-size: 22px; }
+        p { color: #64748b; font-size: 15px; margin-bottom: 25px; line-height: 1.4; }
+        .btn { display: inline-block; width: 100%; padding: 14px; background-color: #2563eb; color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; transition: background 0.2s; box-shadow: 0 4px 12px rgba(37,99,235,0.2); }
+        .btn:active { background-color: #1d4ed8; }
+        .loader-text { display: none; color: #059669; font-weight: bold; margin-top: 15px; }
     </style>
 </head>
 <body>
 
-<div class="loader">
-    <h2>Abriendo formulario seguro...</h2>
-    <p>Por favor, acepta el permiso de ubicación si el navegador lo solicita.</p>
+<div class="card">
+    <h2>Punto de Control GPS</h2>
+    <p>Para registrar tu visita actual con coordenadas precisas en tiempo real, presiona el siguiente botón:</p>
+    
+    <button class="btn" onclick="obtenerUbicacionReal()">📍 CAPTURAR GPS Y ABRIR</button>
+    
+    <div id="status" class="loader-text">Obteniendo coordenadas frescas...</div>
 </div>
 
 <script>
-    // ⚠️ REEMPLAZA ESTE ENLACE CON EL ENLACE REAL DE TU FORMULARIO DE TALLY (Debe incluir tu /r/XXXXXX)
+    // ⚠️ COLOCA TU ENLACE REAL DE TALLY AQUÍ
     const TALLY_URL = "https://tally.so/r/obqGae";
 
-<script>
-    // ⚠️ ASEGÚRATE DE COLOCAR TU ENLACE REAL DE TALLY AQUÍ
-    const TALLY_URL = "https://tally.so";
-
-    function obtenerUbicacion() {
-        const parametrosActuales = window.location.search; 
+    function obtenerUbicacionReal() {
+        const txtStatus = document.getElementById("status");
+        txtStatus.style.display = "block";
+        
+        // Agregar un timestamp aleatorio al historial para romper cualquier congelamiento de Android
+        window.history.replaceState(null, "", window.location.pathname + window.location.search + (window.location.search ? "&" : "?") + "t=" + new Date().getTime());
+        
+        const parametrosActuales = window.location.search;
 
         if (navigator.geolocation) {
-            // Opciones estrictas para encender el chip GPS físico en cada intento
-            const geoOpciones = { 
-                enableHighAccuracy: true, 
-                timeout: 9000, 
-                maximumAge: 0 // Prohíbe usar ubicaciones guardadas en la memoria
-            };
-
             navigator.geolocation.getCurrentPosition(
                 (position) => {
                     const lat = position.coords.latitude;
                     const lon = position.coords.longitude;
                     
-                    // 💥 TRUCO ANTI-CACHÉ: Creamos un número único basado en la hora exacta (milisegundos)
-                    const cacheBuster = "nocache=" + new Date().getTime();
-                    
-                    // Construimos la URL uniendo el GPS y el truco anti-caché
-                    let urlFinal = `${TALLY_URL}?lat=${lat}&lon=${lon}&${cacheBuster}`;
+                    // Truco final anti-caché
+                    const cb = "nc=" + new Date().getTime();
+                    let urlFinal = `${TALLY_URL}?lat=${lat}&lon=${lon}&${cb}`;
                     
                     if (parametrosActuales) {
                         const limpio = parametrosActuales.replace('?', '');
                         urlFinal += `&${limpio}`;
                     }
                     
+                    // Saltamos a Tally
                     window.location.href = urlFinal;
                 },
                 (error) => {
-                    console.warn("Error de GPS o permiso denegado:", error.message);
-                    // Si el GPS falla, redirige manteniendo el municipio
+                    console.warn("Fallo de GPS:", error.message);
                     window.location.href = parametrosActuales ? `${TALLY_URL}${parametrosActuales}` : TALLY_URL;
                 },
-                geoOpciones
+                { enableHighAccuracy: true, timeout: 7000, maximumAge: 0 } // Máxima precisión obligatoria
             );
         } else {
             window.location.href = parametrosActuales ? `${TALLY_URL}${parametrosActuales}` : TALLY_URL;
         }
     }
-
-    // Ejecutar al cargar la página
-    window.onload = obtenerUbicacion;
 </script>
+
+</body>
+</html>
