@@ -1,27 +1,39 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cargando Formulario...</title>
+    <style>
+        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background-color: #f9f9f9; }
+        .loader { text-align: center; color: #333; }
+    </style>
+</head>
+<body>
+
+<div class="loader">
+    <h2>Abriendo formulario seguro...</h2>
+    <p>Por favor, acepta el permiso de ubicación si el navegador lo solicita.</p>
+</div>
+
 <script>
-    // REEMPLAZA ESTE ENLACE CON EL DE TU FORMULARIO REAL DE TALLY
+    // ⚠️ REEMPLAZA ESTE ENLACE CON EL ENLACE REAL DE TU FORMULARIO DE TALLY (Debe incluir tu /r/XXXXXX)
     const TALLY_URL = "https://tally.so/r/obqGae";
 
     function obtenerUbicacion() {
+        // Captura automáticamente cualquier texto de la URL (?municipio=Tlahualilo)
         const parametrosActuales = window.location.search; 
 
         if (navigator.geolocation) {
-            // USAMOS watchPosition EN LUGAR DE getCurrentPosition PARA FORZAR AL GPS A TRABAJAR EN TIEMPO REAL
-            const geoOpciones = { 
-                enableHighAccuracy: true, 
-                timeout: 8000, 
-                maximumAge: 0 // 👈 OBLIGA AL TELÉFONO A NO USAR UBICACIONES VIEJAS EN CACHÉ
-            };
-
-            const idReloj = navigator.geolocation.watchPosition(
+            navigator.geolocation.getCurrentPosition(
                 (position) => {
-                    // Detenemos el reloj de inmediato una vez obtenida la primera coordenada fresca
-                    navigator.geolocation.clearWatch(idReloj);
-
                     const lat = position.coords.latitude;
                     const lon = position.coords.longitude;
                     
+                    // Une el GPS con tu formulario base
                     let urlFinal = `${TALLY_URL}?lat=${lat}&lon=${lon}`;
+                    
+                    // Si tu enlace trae un municipio, lo agrega de forma limpia al final
                     if (parametrosActuales) {
                         const limpio = parametrosActuales.replace('?', '');
                         urlFinal += `&${limpio}`;
@@ -30,24 +42,20 @@
                     window.location.href = urlFinal;
                 },
                 (error) => {
-                    navigator.geolocation.clearWatch(idReloj);
-                    console.warn("Error de GPS o permiso denegado.");
+                    // Si el GPS falla o tarda, redirige manteniendo el municipio intacto
                     window.location.href = parametrosActuales ? `${TALLY_URL}${parametrosActuales}` : TALLY_URL;
                 },
-                geoOpciones
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 } // Forzar actualización real del GPS
             );
         } else {
+            // Navegador sin soporte de GPS
             window.location.href = parametrosActuales ? `${TALLY_URL}${parametrosActuales}` : TALLY_URL;
         }
     }
 
-    // Ejecutar al cargar la página normalmente
+    // Ejecutar al cargar la página
     window.onload = obtenerUbicacion;
-    
-    // 📱 TRUCO PARA ANDROID: Si la app ya estaba abierta en segundo plano, esto detecta cuando el usuario vuelve a entrar
-    document.addEventListener("visibilitychange", () => {
-        if (document.visibilityState === "visible") {
-            obtenerUbicacion();
-        }
-    });
 </script>
+
+</body>
+</html>
