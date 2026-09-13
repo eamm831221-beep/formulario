@@ -9,64 +9,78 @@
         .card { background: white; padding: 30px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.08); text-align: center; max-width: 360px; width: 100%; }
         h2 { color: #1e293b; margin-top: 0; font-size: 22px; }
         p { color: #64748b; font-size: 15px; margin-bottom: 25px; line-height: 1.4; }
-        .btn { display: inline-block; width: 100%; padding: 14px; background-color: #2563eb; color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; transition: background 0.2s; box-shadow: 0 4px 12px rgba(37,99,235,0.2); }
+        .btn { display: inline-block; width: 100%; padding: 14px; background-color: #2563eb; color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; transition: background 0.2s; box-shadow: 0 4px 12px rgba(37,99,235,0.2); margin-bottom: 15px; }
         .btn:active { background-color: #1d4ed8; }
-        .loader-text { display: none; color: #059669; font-weight: bold; margin-top: 15px; }
+        .loader-text { display: none; color: #059669; font-weight: bold; margin-top: 15px; margin-bottom: 15px; }
+        
+        /* Nuevos estilos para los cuadros de texto */
+        .input-group { margin-top: 10px; text-align: left; }
+        .input-group label { display: block; font-size: 13px; color: #64748b; margin-bottom: 5px; font-weight: bold; }
+        .input-field { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; box-sizing: border-box; font-size: 14px; background-color: #f8fafc; color: #334155; }
     </style>
 </head>
 <body>
-
-<div class="card">
-    <h2>VISITA DOMICILIARIA</h2>
-    <p>Para registrar tu visita actual, presiona el siguiente botón:</p>
-    
-    <button class="btn" onclick="obtenerUbicacionReal()">📍 INICIAR VISITA</button>
-    
-    <div id="status" class="loader-text">Obteniendo coordenadas...</div>
-</div>
-
-<script>
-    // ⚠️ COLOCA TU ENLACE REAL DE TALLY AQUÍ
-    const TALLY_URL = "https://tally.so/r/obqGae";
-
-    function obtenerUbicacionReal() {
-        const txtStatus = document.getElementById("status");
-        txtStatus.style.display = "block";
+    <div class="card">
+        <h2>VISITA DOMICILIARIA</h2>
+        <p>Para registrar tu visita actual, presiona el siguiente botón:</p>
+        <button class="btn" onclick="obtenerUbicacionReal()">📍 INICIAR VISITA</button>
         
-        // Agregar un timestamp aleatorio al historial para romper cualquier congelamiento de Android
-        window.history.replaceState(null, "", window.location.pathname + window.location.search + (window.location.search ? "&" : "?") + "t=" + new Date().getTime());
+        <div id="status" class="loader-text">Obteniendo coordenadas...</div>
         
-        const parametrosActuales = window.location.search;
+        <!-- CUADROS DE TEXTO AGREGADOS -->
+        <div class="input-group">
+            <label for="latitud">Latitud:</label>
+            <input type="text" id="latitud" class="input-field" readonly placeholder="Esperando señal...">
+        </div>
+        <div class="input-group">
+            <label for="longitud">Longitud:</label>
+            <input type="text" id="longitud" class="input-field" readonly placeholder="Esperando señal...">
+        </div>
+    </div>
 
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    const lat = position.coords.latitude;
-                    const lon = position.coords.longitude;
-                    
-                    // Truco final anti-caché
-                    const cb = "nc=" + new Date().getTime();
-                    let urlFinal = `${TALLY_URL}?lat=${lat}&lon=${lon}&${cb}`;
-                    
-                    if (parametrosActuales) {
-                        const limpio = parametrosActuales.replace('?', '');
-                        urlFinal += `&${limpio}`;
-                    }
-                    
-                    // Saltamos a Tally
-                    window.location.href = urlFinal;
-                },
-                (error) => {
-                    console.warn("Fallo de GPS:", error.message);
-                    window.location.href = parametrosActuales ? `${TALLY_URL}${parametrosActuales}` : TALLY_URL;
-                },
-                { enableHighAccuracy: true, timeout: 7000, maximumAge: 0 } // Máxima precisión obligatoria
-            );
-        } else {
-            window.location.href = parametrosActuales ? `${TALLY_URL}${parametrosActuales}` : TALLY_URL;
+    <script>
+        // ⚠️ COLOCA TU ENLACE REAL DE TALLY AQUÍ
+        const TALLY_URL = "https://tally.so";
+
+        function obtenerUbicacionReal() {
+            const txtStatus = document.getElementById("status");
+            txtStatus.style.display = "block";
+            
+            window.history.replaceState(null, "", window.location.pathname + window.location.search + (window.location.search ? "&" : "?") + "t=" + new Date().getTime());
+            const parametrosActuales = window.location.search;
+
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const lat = position.coords.latitude;
+                        const lon = position.coords.longitude;
+
+                        // MUESTRA LAS COORDENADAS EN LOS CUADROS DE TEXTO
+                        document.getElementById("latitud").value = lat;
+                        document.getElementById("longitud").value = lon;
+
+                        // Truco final anti-caché
+                        const cb = "nc=" + new Date().getTime();
+                        let urlFinal = `${TALLY_URL}?lat=${lat}&lon=${lon}&${cb}`;
+
+                        if (parametrosActuales) {
+                            const limpio = parametrosActuales.replace('?', '');
+                            urlFinal += `&${limpio}`;
+                        }
+
+                        // Saltamos a Tally (Nota: si deseas que el usuario vea los cuadros antes de saltar, puedes comentar la línea de abajo o añadir un retraso)
+                        window.location.href = urlFinal;
+                    },
+                    (error) => {
+                        console.warn("Fallo de GPS:", error.message);
+                        window.location.href = parametrosActuales ? `${TALLY_URL}${parametrosActuales}` : TALLY_URL;
+                    },
+                    { enableHighAccuracy: true, timeout: 7000, maximumAge: 0 }
+                );
+            } else {
+                window.location.href = parametrosActuales ? `${TALLY_URL}${parametrosActuales}` : TALLY_URL;
+            }
         }
-    }
-</script>
-
+    </script>
 </body>
 </html>
