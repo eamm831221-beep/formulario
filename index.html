@@ -3,85 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VISITAS CASA X CASA</title>
+    <title>Cargando Formulario...</title>
     <style>
-        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background-color: #f0f4f8; padding: 20px; box-sizing: border-box; }
-        .card { background: white; padding: 30px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.08); text-align: center; max-width: 360px; width: 100%; }
-        h2 { color: #1e293b; margin-top: 0; font-size: 22px; }
-        p { color: #64748b; font-size: 15px; margin-bottom: 25px; line-height: 1.4; }
-        .btn { display: inline-block; width: 100%; padding: 14px; background-color: #2563eb; color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; transition: background 0.2s; box-shadow: 0 4px 12px rgba(37,99,235,0.2); margin-bottom: 10px; }
-        .btn:active { background-color: #1d4ed8; }
-        .loader-text { display: none; color: #059669; font-weight: bold; margin-top: 10px; margin-bottom: 15px; }
-        
-        /* Estilos para los cuadros de texto independientes */
-        .input-group { margin-top: 15px; text-align: left; }
-        .input-group label { display: block; font-size: 13px; color: #64748b; margin-bottom: 5px; font-weight: bold; }
-        .input-field { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; box-sizing: border-box; font-size: 14px; background-color: #f8fafc; color: #334155; }
+        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background-color: #f9f9f9; }
+        .loader { text-align: center; color: #333; padding: 20px; }
     </style>
 </head>
 <body>
-    <div class="card">
-        <h2>VISITA DOMICILIARIA</h2>
-        <p>Para registrar tu visita actual, presiona el siguiente botón:</p>
-        
-        <!-- El botón original limpio sin textos extraños -->
-        <button class="btn" onclick="obtenerUbicacionReal()">📍 INICIAR VISITA</button>
-        
-        <div id="status" class="loader-text">Obteniendo coordenadas...</div>
-        
-        <!-- Cuadros independientes donde SÍ se escribirá la ubicación -->
-        <div class="input-group">
-            <label>Latitud registrada:</label>
-            <input type="text" id="miLatitud" class="input-field" readonly placeholder="Esperando GPS...">
-        </div>
-        <div class="input-group">
-            <label>Longitud registrada:</label>
-            <input type="text" id="miLongitud" class="input-field" readonly placeholder="Esperando GPS...">
-        </div>
-    </div>
 
-    <script>
-        const TALLY_URL = "https://tally.so/r/obqGae";
+<div class="loader">
+    <h2>Abriendo formulario seguro...</h2>
+    <p>Capturando coordenadas GPS en tiempo real...</p>
+</div>
 
-        function obtenerUbicacionReal() {
-            const txtStatus = document.getElementById("status");
-            txtStatus.style.display = "block";
-            
-            window.history.replaceState(null, "", window.location.pathname + window.location.search + (window.location.search ? "&" : "?") + "t=" + new Date().getTime());
-            const parametrosActuales = window.location.search;
+<script>
+    // ⚠️ REEMPLAZA ESTE ENLACE CON EL ENLACE REAL DE TU FORMULARIO DE TALLY (Debe incluir tu /r/XXXXXX)
+    const TALLY_URL = "https://tally.so/r/obqGae";
 
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        const lat = position.coords.latitude;
-                        const lon = position.coords.longitude;
+    function obtenerUbicacion() {
+        // Captura automáticamente los parámetros de la URL (?municipio=Tlahualilo)
+        const parametrosActuales = window.location.search; 
 
-                        // Se asignan los valores exclusivamente a las cajas de texto de abajo
-                        document.getElementById("miLatitud").value = lat;
-                        document.getElementById("miLongitud").value = lon;
-
-                        // Construcción de los parámetros limpios para Tally
-                        const cb = "nc=" + new Date().getTime();
-                        let urlFinal = `${TALLY_URL}?lat=${lat}&lon=${lon}&${cb}`;
-
-                        if (parametrosActuales) {
-                            const limpio = parametrosActuales.replace('?', '');
-                            urlFinal += `&${limpio}`;
-                        }
-
-                        // Enviamos los datos y saltamos a Tally
-                        window.location.href = urlFinal;
-                    },
-                    (error) => {
-                        console.warn("Fallo de GPS:", error.message);
-                        window.location.href = parametrosActuales ? `${TALLY_URL}${parametrosActuales}` : TALLY_URL;
-                    },
-                    { enableHighAccuracy: true, timeout: 7000, maximumAge: 0 }
-                );
-            } else {
-                window.location.href = parametrosActuales ? `${TALLY_URL}${parametrosActuales}` : TALLY_URL;
-            }
+        if (navigator.geolocation) {
+            // getCurrentPosition se ejecuta UNA SOLA VEZ y no genera bucles de datos
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+                    
+                    // Une el GPS con tu formulario base agregando un número aleatorio para evitar caché
+                    const cb = "nc=" + new Date().getTime();
+                    let urlFinal = `${TALLY_URL}?lat=${lat}&lon=${lon}&${cb}`;
+                    
+                    if (parametrosActuales) {
+                        const limpio = parametrosActuales.replace('?', '');
+                        urlFinal += `&${limpio}`;
+                    }
+                    
+                    // Salta a Tally inmediatamente y destruye esta pestaña puente
+                    window.location.href = urlFinal;
+                },
+                (error) => {
+                    // Si el GPS tarda o falla, redirige de inmediato para no gastar datos intentando conectarse
+                    console.warn("Fallo de GPS:", error.message);
+                    window.location.href = parametrosActuales ? `${TALLY_URL}${parametrosActuales}` : TALLY_URL;
+                },
+                { enableHighAccuracy: true, timeout: 6000, maximumAge: 60000 } // Permite usar un GPS fresco de hasta 1 minuto atrás para ahorrar internet y batería
+            );
+        } else {
+            window.location.href = parametrosActuales ? `${TALLY_URL}${parametrosActuales}` : TALLY_URL;
         }
-    </script>
+    }
+
+    // Se ejecuta estrictamente una sola vez al cargar la página
+    window.onload = obtenerUbicacion;
+</script>
+
 </body>
 </html>
+
