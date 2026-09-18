@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visitas Casa x Casa</title>
+    <style>
+        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background-color: #f0f4f8; padding: 15px; box-sizing: border-box; }
+        .card { background: white; padding: 22px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); text-align: center; max-width: 380px; width: 100%; box-sizing: border-box; }
+        h2 { color: #1e293b; margin-top: 0; font-size: 18px; margin-bottom: 5px; text-transform: uppercase; }
+        p { color: #64748b; font-size: 13px; margin-bottom: 15px; line-height: 1.4; }
+        .contador-box { background-color: #2563eb; padding: 12px; border-radius: 12px; margin-bottom: 15px; color: white; display: flex; justify-content: space-around; align-items: center; }
+        .counter-item { text-align: center; }
+        .numero { font-size: 32px; font-weight: bold; display: block; line-height: 1; }
+        .label { font-size: 9px; text-transform: uppercase; letter-spacing: 1px; font-weight: bold; opacity: 0.9; }
+        
+        .input-group { margin-bottom: 12px; text-align: left; }
+        .input-label { font-size: 11px; font-weight: bold; color: #475569; text-transform: uppercase; margin-bottom: 4px; display: block; }
+        .input-box { width: 100%; padding: 10px; border: 2px solid #cbd5e1; border-radius: 10px; font-size: 14px; box-sizing: border-box; color: #1e293b; font-weight: 500; }
+        .input-box:focus { border-color: #2563eb; outline: none; }
+        
+        .radio-group { display: flex; gap: 10px; margin-top: 4px; }
+        .radio-label { display: flex; align-items: center; background: #f8fafc; border: 2px solid #e2e8f0; padding: 8px 12px; border-radius: 10px; font-size: 13px; cursor: pointer; width: 100%; box-sizing: border-box; font-weight: 500; color: #334155; }
+        .radio-label input { margin-right: 6px; }
+        
+        .btn { display: inline-block; width: 100%; padding: 14px; background-color: #0f172a; color: white; border: none; border-radius: 10px; font-size: 15px; font-weight: bold; cursor: pointer; margin-top: 10px; text-transform: uppercase; }
+        .btn:active { background-color: #1e293b; }
+        .btn-sync { background-color: #059669; margin-top: 5px; display: none; box-shadow: 0 4px 12px rgba(5,150,105,0.2); }
+        .btn-sync:active { background-color: #047857; }
+        
+        .historial-box { margin-top: 15px; text-align: left; max-height: 120px; overflow-y: auto; border-top: 1px solid #e2e8f0; padding-top: 10px; }
+        .historial-titulo { font-size: 11px; font-weight: bold; color: #475569; margin-bottom: 6px; text-transform: uppercase; }
+        .item-visita { font-size: 12px; color: #334155; padding: 5px 0; border-bottom: 1px dashed #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
+        .item-status { font-weight: bold; font-size: 10px; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; }
+        .status-pendiente { background: #fef3c7; color: #d97706; }
+        .status-sincro { background: #d1fae5; color: #059669; }
+        .btn-reset { background: none; border: none; color: #94a3b8; font-size: 11px; text-decoration: underline; cursor: pointer; margin-top: 15px; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <div class="contador-box">
+        <div class="counter-item">
+            <span id="num-visitas" class="numero">0</span>
+            <span class="label">Turno Actual</span>
+        </div>
+        <div class="counter-item">
+            <span id="num-pendientes" class="numero" style="color: #fcd34d;">0</span>
+            <span class="label">Por Sincronizar</span>
+        </div>
+    </div>
+    
+    <h2>Datos de la Persona</h2>
+    <p>Formulario Offline — Los datos se guardan en el celular si no hay señal.</p>
+    
+    <div class="input-group">
+        <label class="input-label">Nombre(s) *</label>
+        <input type="text" id="int-nombre" class="input-box" required autocomplete="off">
+    </div>
+    <div class="input-group">
+        <label class="input-label">Apellido Paterno *</label>
+        <input type="text" id="int-paterno" class="input-box" required autocomplete="off">
+    </div>
+    <div class="input-group">
+        <label class="input-label">Apellido Materno</label>
+        <input type="text" id="int-materno" class="input-box" autocomplete="off">
+    </div>
+    <div class="input-group">
+        <label class="input-label">Teléfono de Contacto</label>
+        <input type="tel" id="int-telefono" class="input-box" placeholder="10 dígitos" autocomplete="off" maxlength="10">
+    </div>
+    
+    <div class="input-group">
+        <label class="input-label">Sexo *</label>
+        <div class="radio-group">
+            <label class="radio-label"><input type="radio" name="int-sexo" value="HOMBRE"> HOMBRE</label>
+            <label class="radio-label"><input type="radio" name="int-sexo" value="MUJER"> MUJER</label>
+        </div>
+    </div>
+    
+    <div class="input-group">
+        <label class="input-label">Grupo de Edad *</label>
+        <select id="int-edad" class="input-box" style="font-weight: 500;">
+            <option value="">-- Selecciona una opción --</option>
+            <option value="Joven de 15 a 29 años">Joven de 15 a 29 años</option>
+            <option value="Adulto de 30 a 64 años">Adulto de 30 a 64 años</option>
+            <option value="Adulto Mayor de 65 años">Adulto Mayor de 65 años</option>
+        </select>
+    </div>
+    
+    <button class="btn" id="btn-enviar" onclick="guardarLevantamiento()">💾 GUARDAR VISITA</button>
+    <button class="btn btn-sync" id="btn-sincronizar" onclick="sincronizarDatosNube()">🔄 SINCRONIZAR DATOS EN LA NUBE</button>
+    
+    <div class="historial-box">
+        <div class="historial-titulo">📋 Historial de hoy (Turno local)</div>
+        <div id="lista-visitas"></div>
+    </div>
+    
+    <br>
+    <button class="btn-reset" onclick="reiniciarContador()">Reiniciar Historial Local</button>
+</div>
+
+<script>
+    // ⚠️ PEGA AQUÍ TU URL GENERADA EN GOOGLE APPS SCRIPT
+    const GOOGLE_SCRIPT_URL = "TU_URL_DE_GOOGLE_APPS_SCRIPT_AQUI";
+    
+    var latActual = ""; var lonActual = "";
+
+    // CONFIGURACIÓN DE TURNOS OPERATIVOS (Corte automático a las 2:30 PM de México)
+    function obtenerDiaOperativo() {
+        const ahora = new Date();
+        if ((ahora.getHours() * 60) + ahora.getMinutes() < 870) { ahora.setDate(ahora.getDate() - 1); }
+        return ahora.toLocaleDateString();
+    }
+
+    const diaOperativoActual = obtenerDiaOperativo();
+    var visitas = localStorage.getItem("visitas_conteo") ? parseInt(localStorage.getItem("visitas_conteo")) : 0;
+    var ultimoDiaOperativo = localStorage.getItem("visitas_dia_operativo");
+    var historial = localStorage.getItem("visitas_historial") ? JSON.parse(localStorage.getItem("visitas_historial")) : [];
+    var colaOffline = localStorage.getItem("cola_offline") ? JSON.parse(localStorage.getItem("cola_offline")) : [];
+
+    if (ultimoDiaOperativo !== diaOperativoActual) {
+        visitas = 0; historial = [];
+        localStorage.setItem("visitas_conteo", 0);
+        localStorage.setItem("visitas_historial", JSON.stringify([]));
+        localStorage.setItem("visitas_dia_operativo", diaOperativoActual);
+    }
+
+    actualizarInterfaz();
+
+    // RASTREO CONSTANTE DEL SATÉLITE GPS
+    function procesarCoordenadas() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (p) => { latActual = p.coords.latitude.toString(); lonActual = p.coords.longitude.toString(); },
+                (e) => { console.warn("Buscando señal satelital..."); },
+                { enableHighAccuracy: true, timeout: 6000, maximumAge: 60000 }
+            );
+        }
+    }
+
+    // ACCIÓN AL PRESIONAR EL BOTÓN NEGRO
+    function guardarLevantamiento() {
+        const nom = document.getElementById("int-nombre").value.trim();
+        const pat = document.getElementById("int-paterno").value.trim();
+        const mat = document.getElementById("int-materno").value.trim();
+        const tel = document.getElementById("int-telefono").value.trim();
+        const sexoEl = document.querySelector('input[name="int-sexo"]:checked');
+        const edad = document.getElementById("int-edad").value;
+        
+        if (!nom || !pat || !sexoEl || !edad) {
+            alert("Por favor, llena todos los campos marcados con asterisco (*).");
+            return;
+        }
+
+        const sex = sexoEl.value;
+        
+        // Lee las variables automáticas desde el QR maestro (?municipio=Mapimi&servidor=Juan)
+        const urlParams = new URLSearchParams(window.location.search);
+        const muni = urlParams.get('municipio') || "No Especificado";
+        const serv = urlParams.get('servidor') || "No Especificado";
+        
+        const ahora = new Date();
+        const horaTexto = ahora.getHours().toString().padStart(2, '0') + ":" + ahora.getMinutes().toString().padStart(2, '0');
+
+        const nuevoRegistro = {
+            municipio: muni, servidor: serv, nombre: nom, paternal: pat, maternal: mat,
+            telefono: tel, sexo: sex, grupo_edad: edad, latitud: latActual || "No Capturada", longitud: lonActual || "No Capturada"
+        };
+
+        // Guarda el paquete directamente en la memoria interna del celular (Blindaje Offline)
+        colaOffline.push(nuevoRegistro);
+        localStorage.setItem("cola_offline", JSON.stringify(colaOffline));
+
+        visitas++;
+        localStorage.setItem("visitas_conteo", visitas);
+
+        historial.unshift({ nombreVisual: `${nom} ${pat}`, hora: horaTexto, status: "Pendiente" });
+        localStorage.setItem("visitas_historial", JSON.stringify(historial));
+
+        // Limpia el formulario completo para el siguiente ciudadano
