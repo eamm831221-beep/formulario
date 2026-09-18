@@ -5,15 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Punto de Control GPS</title>
     <style>
-        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background-color: #f0f4f8; padding: 20px; box-sizing: border-box; }
-        .card { background: white; padding: 30px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); text-align: center; max-width: 360px; width: 100%; }
-        h2 { color: #1e293b; margin-top: 0; font-size: 20px; }
-        p { color: #64748b; font-size: 14px; margin-bottom: 20px; line-height: 1.4; }
-        .contador-box { background-color: #2563eb; padding: 20px; border-radius: 12px; margin-bottom: 20px; color: white; box-shadow: 0 4px 12px rgba(37,99,235,0.2); }
-        .numero { font-size: 54px; font-weight: bold; display: block; line-height: 1; margin-bottom: 5px; }
+        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background-color: #f0f4f8; padding: 20px; box-sizing: border-box; }
+        .card { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); text-align: center; max-width: 360px; width: 100%; }
+        h2 { color: #1e293b; margin-top: 0; font-size: 18px; }
+        p { color: #64748b; font-size: 13px; margin-bottom: 15px; line-height: 1.4; }
+        .contador-box { background-color: #2563eb; padding: 15px; border-radius: 12px; margin-bottom: 15px; color: white; box-shadow: 0 4px 12px rgba(37,99,235,0.2); }
+        .numero { font-size: 48px; font-weight: bold; display: block; line-height: 1; margin-bottom: 5px; }
         .label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; font-weight: bold; opacity: 0.9; }
         .btn { display: inline-block; width: 100%; padding: 14px; background-color: #0f172a; color: white; border: none; border-radius: 10px; font-size: 15px; font-weight: bold; cursor: pointer; margin-top: 5px; }
         .btn:active { background-color: #1e293b; }
+        .historial-box { margin-top: 20px; text-align: left; max-height: 180px; overflow-y: auto; border-top: 1px solid #e2e8f0; padding-top: 15px; }
+        .historial-titulo { font-size: 12px; font-weight: bold; color: #475569; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .item-visita { font-size: 13px; color: #334155; padding: 6px 0; border-bottom: 1px dashed #e2e8f0; display: flex; justify-content: space-between; }
+        .item-hora { color: #94a3b8; font-weight: bold; }
         .btn-reset { background: none; border: none; color: #94a3b8; font-size: 11px; text-decoration: underline; cursor: pointer; margin-top: 15px; }
     </style>
 </head>
@@ -25,13 +29,21 @@
         <span class="label">Visitas en este turno</span>
     </div>
     
-    <h2>Ubicación Ready</h2>
+    <h2>Ubicación Lista</h2>
     <p>Presiona el botón para abrir el formulario y registrar tus coordenadas en tiempo real.</p>
     
     <button class="btn" id="btn-enviar" onclick="avanzarATally()">📝 ABRIR FORMULARIO</button>
     
+    <!-- Sección de historial personal -->
+    <div class="historial-box">
+        <div class="historial-titulo">📋 Historial de visitas (Turno actual)</div>
+        <div id="lista-visitas">
+            <!-- Los registros se inyectarán aquí con JavaScript -->
+        </div>
+    </div>
+    
     <br>
-    <button class="btn-reset" onclick="reiniciarContador()">Reiniciar contador manual a 0</button>
+    <button class="btn-reset" onclick="reiniciarContador()">Reiniciar historial manual</button>
 </div>
 
 <script>
@@ -40,40 +52,35 @@
     
     let urlDestinoFinal = TALLY_URL;
 
-    // 1. LÓGICA DE DÍA OPERATIVO (Corte exacto a las 2:30 PM)
+    // 1. LÓGICA DE DÍA OPERATIVO Y CORTE (A las 2:30 PM)
     function obtenerDiaOperativo() {
         const ahora = new Date();
-        const horaActual = ahora.getHours();
-        const minutosActuales = ahora.getMinutes();
+        const tiempoActualEnMinutos = (ahora.getHours() * 60) + ahora.getMinutes();
+        const tiempoCorteEnMinutos = (14 * 60) + 30; // 14:30 hrs
 
-        // Convertimos el tiempo actual a minutos totales transcurridos en el día
-        const tiempoActualEnMinutos = (horaActual * 60) + minutosActuales;
-        
-        // 2:30 PM equivale a 14 horas * 60 minutos + 30 minutos = 870 minutos
-        const tiempoCorteEnMinutos = (14 * 60) + 30;
-
-        // Si la hora del teléfono está antes de las 2:30 PM (870 min), pertenece al turno del día anterior
         if (tiempoActualEnMinutos < tiempoCorteEnMinutos) {
             ahora.setDate(ahora.getDate() - 1);
         }
-        
-        // Retorna la fecha del día operativo correspondiente en formato de texto limpio
         return ahora.toLocaleDateString();
     }
 
     const diaOperativoActual = obtenerDiaOperativo();
     let visitas = localStorage.getItem("visitas_conteo") ? parseInt(localStorage.getItem("visitas_conteo")) : 0;
     let ultimoDiaOperativo = localStorage.getItem("visitas_dia_operativo");
+    let historial = localStorage.getItem("visitas_historial") ? JSON.parse(localStorage.getItem("visitas_historial")) : [];
 
-    // Si entramos a un nuevo ciclo (pasaron las 2:30 PM del día actual), se reinicia a 0
+    // Si cambió el turno operativo (pasaron las 2:30 PM), el contador e historial se limpian automáticamente
     if (ultimoDiaOperativo !== diaOperativoActual) {
         visitas = 0;
+        historial = [];
         localStorage.setItem("visitas_conteo", 0);
+        localStorage.setItem("visitas_historial", JSON.stringify([]));
         localStorage.setItem("visitas_dia_operativo", diaOperativoActual);
     }
 
-    // Mostrar el número actualizado en el recuadro azul
+    // Dibujar datos actuales en la pantalla
     document.getElementById("num-visitas").innerText = visitas;
+    renderizarHistorial();
 
     // 2. CAPTURA DEL GPS EN SEGUNDO PLANO
     function procesarCoordenadas() {
@@ -92,7 +99,6 @@
                         const limpio = parametrosActuales.replace('?', '');
                         urlCalculada += `&${limpio}`;
                     }
-                    
                     urlDestinoFinal = urlCalculada;
                 },
                 (error) => {
@@ -106,22 +112,56 @@
         }
     }
 
-    // 3. ACCIÓN AL PRESIONAR EL BOTÓN
+    // 3. ACCIÓN AL ENVIAR Y GUARDAR REGISTRO LOCAL
     function avanzarATally() {
-        document.getElementById("btn-enviar").disabled = true;
-        document.getElementById("btn-enviar").innerText = "Cargando...";
+        // Extrae el municipio de la URL (?municipio=Tlahualilo) para guardarlo en el historial
+        const urlParams = new URLSearchParams(window.location.search);
+        const muniDetectado = urlParams.get('municipio') || "Desconocido";
+        
+        // Obtiene la hora actual del registro (HH:MM)
+        const ahora = new Date();
+        const horaTexto = ahora.getHours().toString().padStart(2, '0') + ":" + ahora.getMinutes().toString().padStart(2, '0');
 
+        // Suma al contador
         visitas++;
         localStorage.setItem("visitas_conteo", visitas);
+
+        // Agrega el nuevo registro al inicio del historial
+        historial.unshift({ municipio: muniDetectado, hora: horaTexto });
+        localStorage.setItem("visitas_historial", JSON.stringify(historial));
+
+        document.getElementById("btn-enviar").disabled = true;
+        document.getElementById("btn-enviar").innerText = "Cargando...";
         
         window.location.href = urlDestinoFinal;
     }
 
+    // Función para pintar la lista de visitas en la pantalla
+    function renderizarHistorial() {
+        const contenedor = document.getElementById("lista-visitas");
+        contenedor.innerHTML = "";
+        
+        if (historial.length === 0) {
+            contenedor.innerHTML = '<div style="font-size:12px; color:#94a3b8; text-align:center; padding:10px;">No hay registros en este turno.</div>';
+            return;
+        }
+
+        historial.forEach(item => {
+            const div = document.createElement("div");
+            div.className = "item-visita";
+            div.innerHTML = `<span>📍 ${item.municipio}</span><span class="item-hora">${item.hora}</span>`;
+            contenedor.appendChild(div);
+        });
+    }
+
     function reiniciarContador() {
-        if(confirm("¿Quieres reiniciar el contador actual a 0?")) {
+        if(confirm("¿Quieres borrar el conteo e historial actual a 0?")) {
             localStorage.setItem("visitas_conteo", 0);
+            localStorage.setItem("visitas_historial", JSON.stringify([]));
             document.getElementById("num-visitas").innerText = 0;
             visitas = 0;
+            historial = [];
+            renderizarHistorial();
         }
     }
 
