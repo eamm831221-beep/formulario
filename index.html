@@ -5,73 +5,80 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Punto de Control GPS</title>
     <style>
-        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background-color: #f0f4f8; padding: 20px; box-sizing: border-box; }
-        .card { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); text-align: center; max-width: 360px; width: 100%; }
-        h2 { color: #1e293b; margin-top: 0; font-size: 18px; margin-bottom: 5px; }
-        p { color: #64748b; font-size: 13px; margin-bottom: 15px; line-height: 1.4; }
-        .contador-box { background-color: #2563eb; padding: 15px; border-radius: 12px; margin-bottom: 15px; color: white; box-shadow: 0 4px 12px rgba(37,99,235,0.2); }
-        .numero { font-size: 48px; font-weight: bold; display: block; line-height: 1; margin-bottom: 5px; }
-        .label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; font-weight: bold; opacity: 0.9; }
+        /* Estilos e Identidad Visual basados fielmente en Tally.so */
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background-color: #ffffff; padding: 20px; box-sizing: border-box; color: #333333; }
+        .card { background: #ffffff; padding: 40px 30px; border-radius: 0px; max-width: 420px; width: 100%; box-sizing: border-box; text-align: left; }
         
-        /* Estilos de los 3 cuadros de texto */
-        .input-group { margin-bottom: 15px; text-align: left; }
-        .input-label { font-size: 11px; font-weight: bold; color: #475569; text-transform: uppercase; margin-bottom: 4px; display: block; }
-        .input-box { width: 100%; padding: 11px; border: 2px solid #cbd5e1; border-radius: 10px; font-size: 14px; box-sizing: border-box; color: #1e293b; font-weight: 500; }
-        .input-box:focus { border-color: #2563eb; outline: none; }
+        .contador-badge { font-size: 13px; font-weight: 500; color: #4f46e5; background-color: #eef2ff; padding: 6px 12px; border-radius: 20px; display: inline-block; margin-bottom: 25px; }
         
-        .btn { display: inline-block; width: 100%; padding: 14px; background-color: #0f172a; color: white; border: none; border-radius: 10px; font-size: 15px; font-weight: bold; cursor: pointer; margin-top: 5px; }
-        .btn:active { background-color: #1e293b; }
-        .historial-box { margin-top: 20px; text-align: left; max-height: 180px; overflow-y: auto; border-top: 1px solid #e2e8f0; padding-top: 15px; }
-        .historial-titulo { font-size: 12px; font-weight: bold; color: #475569; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
-        .item-visita { font-size: 12px; color: #334155; padding: 6px 0; border-bottom: 1px dashed #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
-        .item-nombre-completo { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 80%; }
-        .item-hora { color: #94a3b8; font-weight: bold; font-size: 11px; }
-        .btn-reset { background: none; border: none; color: #94a3b8; font-size: 11px; text-decoration: underline; cursor: pointer; margin-top: 15px; }
+        h2 { font-size: 26px; font-weight: 700; color: #111827; margin: 0 0 10px 0; letter-spacing: -0.5px; }
+        p { color: #6b7280; font-size: 15px; margin-bottom: 30px; line-height: 1.5; }
+        
+        .input-group { margin-bottom: 24px; }
+        .input-label { font-size: 14px; font-weight: 500; color: #374151; margin-bottom: 8px; display: block; }
+        .input-label span { color: #ef4444; margin-left: 3px; }
+        .input-box { width: 100%; padding: 12px 0px; border: none; border-bottom: 1px solid #d1d5db; font-size: 16px; box-sizing: border-box; color: #111827; background: transparent; transition: border-level 0.2s; }
+        .input-box:focus { border-bottom: 2px solid #111827; outline: none; }
+        .input-box::placeholder { color: #9ca3af; font-size: 15px; }
+        
+        .btn { display: inline-block; width: 100%; padding: 14px; background-color: #111827; color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: 500; cursor: pointer; margin-top: 15px; transition: background 0.2s; text-align: center; }
+        .btn:active { background-color: #1f2937; }
+        
+        .historial-box { margin-top: 35px; border-top: 1px solid #e5e7eb; padding-top: 25px; }
+        .historial-titulo { font-size: 14px; font-weight: 600; color: #111827; margin-bottom: 15px; letter-spacing: -0.2px; }
+        .item-visita { font-size: 14px; color: #4b5563; padding: 10px 0; border-bottom: 1px solid #f3f4f6; display: flex; justify-content: space-between; align-items: center; }
+        
+        /* Consecutivo estilizado numerado */
+        .consecutivo-num { font-weight: 600; color: #9ca3af; margin-right: 8px; font-feature-settings: "tnum"; }
+        .item-nombre { color: #111827; font-weight: 400; }
+        .item-hora { color: #9ca3af; font-size: 12px; font-feature-settings: "tnum"; }
+        
+        .btn-reset { background: none; border: none; color: #9ca3af; font-size: 12px; text-decoration: underline; cursor: pointer; margin-top: 25px; display: block; width: 100%; text-align: center; }
+        .btn-reset:hover { color: #6b7280; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <div class="contador-box">
-        <span id="num-visitas" class="numero">0</span>
-        <span class="label">Visitas en este turno</span>
+    <!-- Marcador de visitas del turno -->
+    <div class="contador-badge">
+        ✨ <span id="badge-total">0</span> visitas en este turno
     </div>
     
     <h2>Datos del Entrevistado</h2>
     <p>Completa los campos obligatorios para activar el GPS y abrir el cuestionario.</p>
     
-    <!-- Bloque de 3 casillas -->
     <div class="input-group">
-        <label class="input-label">Nombre(s):</label>
-        <input type="text" id="int-nombre" class="input-box" placeholder="Ej. María del Carmen" autocomplete="off">
+        <label class="input-label">Nombre(s) <span>*</span></label>
+        <input type="text" id="int-nombre" class="input-box" placeholder="Escribe el nombre o nombres" autocomplete="off">
     </div>
     <div class="input-group">
-        <label class="input-label">Apellido Paterno:</label>
-        <input type="text" id="int-paterno" class="input-box" placeholder="Ej. Gómez" autocomplete="off">
+        <label class="input-label">Apellido Paterno <span>*</span></label>
+        <input type="text" id="int-paterno" class="input-box" placeholder="Escribe el apellido paterno" autocomplete="off">
     </div>
     <div class="input-group">
-        <label class="input-label">Apellido Materno:</label>
-        <input type="text" id="int-materno" class="input-box" placeholder="Ej. López" autocomplete="off">
+        <label class="input-label">Apellido Materno</label>
+        <input type="text" id="int-materno" class="input-box" placeholder="Escribe el apellido materno (opcional)" autocomplete="off">
     </div>
     
     <button class="btn" id="btn-enviar" onclick="avanzarATally()">📝 ABRIR FORMULARIO</button>
     
+    <!-- Historial de registros del turno -->
     <div class="historial-box">
         <div class="historial-titulo">📋 Entrevistados en este turno</div>
         <div id="lista-visitas"></div>
     </div>
     
-    <br>
     <button class="btn-reset" onclick="reiniciarContador()">Reiniciar historial manual</button>
 </div>
 
 <script>
-    // ⚠️ REEMPLAZA ESTE ENLACE CON TU ENLACE REAL DE TALLY
-    const TALLY_URL = "https://tally.so/r/obqGae";
+    // ⚠️ REEMPLAZA EL ENLACE DE ABAJO POR TU DIRECCIÓN PÚBLICA DE COMPARTIR EN TALLY
+    const TALLY_URL = "https://tally.so"; 
     
     let urlDestinoFinal = TALLY_URL;
 
-    // LÓGICA DE DÍA OPERATIVO Y CORTE (Corte a las 2:30 PM)
+    // 1. LÓGICA DE TURNOS OPERATIVOS (Corte automático a las 2:30 PM de México)
     function obtenerDiaOperativo() {
         const ahora = new Date();
         const tiempoActualEnMinutos = (ahora.getHours() * 60) + ahora.getMinutes();
@@ -96,10 +103,10 @@
         localStorage.setItem("visitas_dia_operativo", diaOperativoActual);
     }
 
-    document.getElementById("num-visitas").innerText = visitas;
+    document.getElementById("badge-total").innerText = visitas;
     renderizarHistorial();
 
-    // CAPTURA DEL GPS EN SEGUNDO PLANO
+    // 2. CAPTURA DEL GPS EN SEGUNDO PLANO (Ahorro de datos al 100%)
     function procesarCoordenadas() {
         const parametrosActuales = window.location.search;
 
@@ -119,7 +126,7 @@
                     urlDestinoFinal = urlCalculada;
                 },
                 (error) => {
-                    console.warn("Fallo de GPS:", error.message);
+                    console.warn("Señal de GPS retrasada:", error.message);
                     urlDestinoFinal = parametrosActuales ? `${TALLY_URL}${parametrosActuales}` : TALLY_URL;
                 },
                 { enableHighAccuracy: true, timeout: 6000, maximumAge: 60000 }
@@ -129,13 +136,12 @@
         }
     }
 
-    // ACCIÓN AL PRESIONAR EL BOTÓN
+    // 3. ACCIÓN AL PRESIONAR EL BOTÓN
     function avanzarATally() {
         const nom = document.getElementById("int-nombre").value.trim();
         const pat = document.getElementById("int-paterno").value.trim();
         const mat = document.getElementById("int-materno").value.trim();
         
-        // Validación obligatoria: Exigir por lo menos nombre y apellido paterno
         if (nom === "" || pat === "") {
             alert("Por favor, ingresa el Nombre y el Apellido Paterno obligatoriamente.");
             return;
@@ -147,53 +153,51 @@
         visitas++;
         localStorage.setItem("visitas_conteo", visitas);
 
-        // Construir el nombre completo para el diseño de la lista inferior
         const nombreCompletoHistorial = `${nom} ${pat} ${mat}`.trim();
-        historial.unshift({ nombreVisual: nombreCompletoHistorial, hora: horaTexto });
+        
+        // Guardamos el número consecutivo correspondiente en el objeto del historial
+        historial.unshift({ numeroConsecutivo: visitas, nombreVisual: nombreCompletoHistorial, hora: horaTexto });
         localStorage.setItem("visitas_historial", JSON.stringify(historial));
 
-        // INYECCIÓN DINÁMICA DE PARÁMETROS HACIA TALLY
+        // Acoplamos las variables del entrevistado en la URL hacia los campos ocultos de Tally
         let urlInyectada = urlDestinoFinal + `&nombre=${encodeURIComponent(nom)}&paterno=${encodeURIComponent(pat)}`;
         if (mat !== "") {
             urlInyectada += `&materno=${encodeURIComponent(mat)}`;
         }
 
         document.getElementById("btn-enviar").disabled = true;
-        document.getElementById("btn-enviar").innerText = "Cargando...";
+        document.getElementById("btn-enviar").innerText = "Abriendo Formulario Tally...";
         
         window.location.href = urlInyectada;
     }
 
+    // 4. DIBUJAR LA LISTA CON CONSECUTIVOS ORDENADOS
     function renderizarHistorial() {
         const contenedor = document.getElementById("lista-visitas");
         contenedor.innerHTML = "";
         
         if (historial.length === 0) {
-            contenedor.innerHTML = '<div style="font-size:12px; color:#94a3b8; text-align:center; padding:10px;">No hay entrevistas registradas.</div>';
+            contenedor.innerHTML = '<div style="font-size:14px; color:#9ca3af; text-align:center; padding:15px 0;">No hay registros en este turno.</div>';
             return;
         }
 
         historial.forEach(item => {
             const div = document.createElement("div");
             div.className = "item-visita";
-            div.innerHTML = `<span class="item-nombre-completo" title="${item.nombreVisual}">👤 ${item.nombreVisual}</span><span class="item-hora">${item.hora}</span>`;
+            // Se concatena el número consecutivo al inicio de cada registro (ej: #1, #2)
+            div.innerHTML = `
+                <div>
+                    <span class="consecutivo-num">#${item.numeroConsecutivo}</span>
+                    <span class="item-nombre">${item.nombreVisual}</span>
+                </div>
+                <span class="item-hora">${item.hora}</span>
+            `;
             contenedor.appendChild(div);
         });
     }
 
     function reiniciarContador() {
-        if(confirm("¿Quieres borrar el conteo e historial completo de nombres?")) {
-            localStorage.setItem("visitas_conteo", 0);
-            localStorage.setItem("visitas_historial", JSON.stringify([]));
-            document.getElementById("num-visitas").innerText = 0;
-            visitas = 0;
-            historial = [];
-            renderizarHistorial();
-        }
-    }
+        if(confirm("¿Quieres borrar el conteo e historial completo de nombres del teléfono?")) {
+localStorage.setItem("visitas_conteo", 0);localStorage.setItem("visitas_historial", JSON.stringify([]));document.getElementById("badge-total").innerText = 0;visitas = 0;historial = [];renderizarHistorial();}}window.onload = procesarCoordenadas;
 
-    window.onload = procesarCoordenadas;
-</script>
-
-</body>
-</html>
+        
