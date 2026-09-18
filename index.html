@@ -40,7 +40,6 @@
 <body>
 
 <div class="card">
-    <!-- Marcador de visitas del turno -->
     <div class="contador-badge">
         ✨ <span id="badge-total">0</span> visitas en este turno
     </div>
@@ -54,7 +53,7 @@
     </div>
     <div class="input-group">
         <label class="input-label">Apellido Paterno <span>*</span></label>
-        <input type="text" id="int-paterno" class="input-box" placeholder="Escribe el apellido paterno" autocomplete="off">
+        <input type="text" id="int-paterno" class="input-box" placeholder="Escribe el apellido paternal" autocomplete="off">
     </div>
     <div class="input-group">
         <label class="input-label">Apellido Materno</label>
@@ -63,7 +62,6 @@
     
     <button class="btn" id="btn-enviar" onclick="avanzarATally()">📝 ABRIR FORMULARIO</button>
     
-    <!-- Historial de registros del turno -->
     <div class="historial-box">
         <div class="historial-titulo">📋 Entrevistados en este turno</div>
         <div id="lista-visitas"></div>
@@ -72,13 +70,13 @@
     <button class="btn-reset" onclick="reiniciarContador()">Reiniciar historial manual</button>
 </div>
 
-<script>
-    // Enlace público de compartir de tu formulario Tally
-    const TALLY_URL = "https://tally.so"; 
+    <script>
+    // Enlace de tu formulario de Tally
+    const TALLY_URL = "https://tally.so/r/obqGae"; 
     
     let urlDestinoFinal = TALLY_URL;
 
-    // 1. LÓGICA DE TURNOS OPERATIVOS (Corte automático a las 2:30 PM de México)
+    // 1. LÓGICA DE TURNOS (Corte automático a las 2:30 PM de México)
     function obtenerDiaOperativo() {
         const ahora = new Date();
         const tiempoActualEnMinutos = (ahora.getHours() * 60) + ahora.getMinutes();
@@ -136,7 +134,7 @@
         }
     }
 
-    // 3. ACCIÓN AL PRESIONAR EL BOTÓN
+    // 3. ACCIÓN AL MANDAR A TALLY
     function avanzarATally() {
         const nom = document.getElementById("int-nombre").value.trim();
         const pat = document.getElementById("int-paterno").value.trim();
@@ -155,23 +153,22 @@
 
         const nombreCompletoHistorial = `${nom} ${pat} ${mat}`.trim();
         
-        // Guardamos el número consecutivo correspondiente en el objeto del historial
+        // Asignamos el número consecutivo en orden real
         historial.unshift({ numeroConsecutivo: visitas, nombreVisual: nombreCompletoHistorial, hora: horaTexto });
         localStorage.setItem("visitas_historial", JSON.stringify(historial));
 
-        // Acoplamos las variables del entrevistado en la URL hacia los campos ocultos de Tally
         let urlInyectada = urlDestinoFinal + `&nombre=${encodeURIComponent(nom)}&paterno=${encodeURIComponent(pat)}`;
         if (mat !== "") {
             urlInyectada += `&materno=${encodeURIComponent(mat)}`;
         }
 
         document.getElementById("btn-enviar").disabled = true;
-        document.getElementById("btn-enviar").innerText = "Abriendo Formulario Tally...";
+        document.getElementById("btn-enviar").innerText = "Abriendo Tally...";
         
         window.location.href = urlInyectada;
     }
 
-    // 4. DIBUJAR LA LISTA CON CONSECUTIVOS ORDENADOS
+    // 4. DIBUJAR LA LISTA CON CONSECUTIVOS ORDENADOS (#1, #2)
     function renderizarHistorial() {
         const contenedor = document.getElementById("lista-visitas");
         contenedor.innerHTML = "";
@@ -199,15 +196,14 @@
         if(confirm("¿Quieres borrar el conteo e historial completo de nombres del teléfono?")) {
             localStorage.setItem("visitas_conteo", 0);
             localStorage.setItem("visitas_historial", JSON.stringify([]));
-document.getElementById("badge-total").innerText = 0;
+            document.getElementById("badge-total").innerText = 0;
             visitas = 0;
             historial = [];
             renderizarHistorial();
         }
     }
-window.onload = procesarCoordenadas;
 
-
-
-
-        
+    window.onload = procesarCoordenadas;
+</script>
+</body>
+</html>
