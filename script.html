@@ -102,12 +102,12 @@
 </div>
 
 <script>
-    // ⚠️ PEGA AQUÍ TU URL GENERADA EN GOOGLE APPS SCRIPT
-    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx9VbjxkPNT6FSyX5Dfu7H22G9gveNZMR5QQpri5bvL8-tRV3TDq1fx7A_IFl4s1Gi7kw/exec";
+    // ⚠️ REEMPLAZA EL TEXTO DE ABAJO ENTRE LAS COMILLAS CON TU URL REAL DE GOOGLE APPS SCRIPT
+    const GOOGLE_SCRIPT_URL = "TU_URL_DE_GOOGLE_APPS_SCRIPT_AQUI";
     
     var latActual = ""; var lonActual = "";
 
-    // CONFIGURACIÓN DE TURNOS OPERATIVOS (Corte automático a las 2:30 PM de México)
+    // CONTROL DE TURNOS (Corte automático a las 2:30 PM hora de México)
     function obtenerDiaOperativo() {
         const ahora = new Date();
         if ((ahora.getHours() * 60) + ahora.getMinutes() < 870) { ahora.setDate(ahora.getDate() - 1); }
@@ -129,18 +129,18 @@
 
     actualizarInterfaz();
 
-    // RASTREO CONSTANTE DEL SATÉLITE GPS
+    // EXTRACCIÓN PERMANENTE DE COORDENADAS SATELITALES
     function procesarCoordenadas() {
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
                 (p) => { latActual = p.coords.latitude.toString(); lonActual = p.coords.longitude.toString(); },
-                (e) => { console.warn("Buscando señal satelital..."); },
+                (e) => { console.warn("Buscando señal..."); },
                 { enableHighAccuracy: true, timeout: 6000, maximumAge: 60000 }
             );
         }
     }
 
-    // ACCIÓN AL PRESIONAR EL BOTÓN NEGRO
+    // ACCIÓN DEL BOTÓN NEGRO (GUARDAR EN EL CELULAR)
     function guardarLevantamiento() {
         const nom = document.getElementById("int-nombre").value.trim();
         const pat = document.getElementById("int-paterno").value.trim();
@@ -156,7 +156,7 @@
 
         const sex = sexoEl.value;
         
-        // Lee las variables automáticas desde el QR maestro (?municipio=Mapimi&servidor=Juan)
+        // Lee en automático las variables del QR maestro (?municipio=Mapimi&servidor=Miguel)
         const urlParams = new URLSearchParams(window.location.search);
         const muni = urlParams.get('municipio') || "No Especificado";
         const serv = urlParams.get('servidor') || "No Especificado";
@@ -165,11 +165,11 @@
         const horaTexto = ahora.getHours().toString().padStart(2, '0') + ":" + ahora.getMinutes().toString().padStart(2, '0');
 
         const nuevoRegistro = {
-            municipio: muni, servidor: serv, nombre: nom, paternal: pat, maternal: mat,
+            municipio: muni, servidor: serv, nombre: nom, paterno: pat, materno: mat,
             telefono: tel, sexo: sex, grupo_edad: edad, latitud: latActual || "No Capturada", longitud: lonActual || "No Capturada"
         };
 
-        // Guarda el paquete directamente en la memoria interna del celular (Blindaje Offline)
+        // Guarda el bloque completo encriptado en el almacenamiento físico del móvil
         colaOffline.push(nuevoRegistro);
         localStorage.setItem("cola_offline", JSON.stringify(colaOffline));
 
@@ -179,4 +179,11 @@
         historial.unshift({ nombreVisual: `${nom} ${pat}`, hora: horaTexto, status: "Pendiente" });
         localStorage.setItem("visitas_historial", JSON.stringify(historial));
 
-        // Limpia el formulario completo para el siguiente ciudadano
+        // Limpia el lienzo para la siguiente casa de inmediato
+document.getElementById("int-nombre").value = ""; document.getElementById("int-paterno").value = "";document.getElementById("int-materno").value = ""; document.getElementById("int-telefono").value = "";if(sexoEl) sexoEl.checked = false; document.getElementById("int-edad").value = "";actualizarInterfaz();alert("¡Visita guardada localmente en el teléfono!");procesarCoordenadas();}// ACCIÓN DEL BOTÓN VERDE (SINCRO A GOOGLE SHEETS)function sincronizarDatosNube() {if (colaOffline.length === 0) return;if (!navigator.onLine) { alert("Aún no tienes conexión a internet. Inténtalo al regresar a una zona con señal."); return; }const btnSync = document.getElementById("btn-sincronizar");btnSync.disabled = true; btnSync.innerText = "Sincronizando registros...";const registrosAEnviar = [...colaOffline];registrosAEnviar.forEach((registro, index) => {fetch(GOOGLE_SCRIPT_URL, {method: "POST",mode: "no-cors",headers: { "Content-Type": "application/json" },body: JSON.stringify(registro)}).then(() => {// Si la fila se asentó en Sheets, se elimina de la cola del celcolaOffline = colaOffline.filter(item => item !== registro);localStorage.setItem("cola_offline", JSON.stringify(colaOffline));// Actualiza el marcador estético de la listaif(historial[index]) historial[index].status = "Sincronizado";localStorage.setItem("visitas_historial", JSON.stringify(historial));actualizarInterfaz();if (colaOffline.length === 0) {btnSync.disabled = false;alert("¡Sincronización finalizada! Todo se encuentra en Google Sheets.");}}).catch(() => {btnSync.disabled = false; btnSync.innerText = "🔄 SINCRONIZAR DATOS EN LA NUBE";});});}function actualizarInterfaz() {document.getElementById("num-visitas").innerText = visitas;document.getElementById("num-pendientes").innerText = colaOffline.length;const btnSync = document.getElementById("btn-sincronizar");btnSync.style.display = colaOffline.length > 0 ? "inline-block" : "none";const contenedor = document.getElementById("lista-visitas");contenedor.innerHTML = "";if (historial.length === 0) {contenedor.innerHTML = 'No hay registros en este turno.';return;}historial.forEach(item => {const div = document.createElement("div");div.className = "item-visita";const claseStatus = item.status === "Sincronizado" ? "status-sincro" : "status-pendiente";div.innerHTML = <span>👤 ${item.nombreVisual} (${item.hora})</span><span class="item-status ${claseStatus}">${item.status}</span>;contenedor.appendChild(div);});}function reiniciarContador() {if(confirm("¿Limpiar el historial visual? (Esto no borrará las encuestas pendientes por subir)")) {localStorage.setItem("visitas_conteo", 0); localStorage.setItem("visitas_historial", JSON.stringify([]));visitas = 0; historial = []; actualizarInterfaz();}}// ARRANQUE EN MODO OFFLINE AUTOMÁTICO (SERVICE WORKER PWA)window.onload = procesarCoordenadas;if ('serviceWorker' in navigator) {navigator.serviceWorker.register('data:text/javascript;base64,' + btoa(const CACHE_NAME = 'cxc-v1'; self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(['./', './script.html']))); }); self.addEventListener('fetch', e => { e.respondWith(caches.match(e.request).then(res => res || fetch(e.request))); });));}
+
+
+
+
+
+    
