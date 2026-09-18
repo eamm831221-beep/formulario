@@ -17,7 +17,7 @@
         .input-group { margin-bottom: 24px; }
         .input-label { font-size: 14px; font-weight: 500; color: #374151; margin-bottom: 8px; display: block; }
         .input-label span { color: #ef4444; margin-left: 3px; }
-        .input-box { width: 100%; padding: 12px 0px; border: none; border-bottom: 1px solid #d1d5db; font-size: 16px; box-sizing: border-box; color: #111827; background: transparent; transition: border-level 0.2s; }
+        .input-box { width: 100%; padding: 12px 0px; border: none; border-bottom: 1px solid #d1d5db; font-size: 16px; box-sizing: border-box; color: #111827; background: transparent; transition: border-bottom 0.2s; }
         .input-box:focus { border-bottom: 2px solid #111827; outline: none; }
         .input-box::placeholder { color: #9ca3af; font-size: 15px; }
         
@@ -73,7 +73,7 @@
 </div>
 
 <script>
-    // ⚠️ REEMPLAZA EL ENLACE DE ABAJO POR TU DIRECCIÓN PÚBLICA DE COMPARTIR EN TALLY
+    // Enlace público de compartir de tu formulario Tally
     const TALLY_URL = "https://tally.so"; 
     
     let urlDestinoFinal = TALLY_URL;
@@ -106,7 +106,7 @@
     document.getElementById("badge-total").innerText = visitas;
     renderizarHistorial();
 
-    // 2. CAPTURA DEL GPS EN SEGUNDO PLANO (Ahorro de datos al 100%)
+    // 2. CAPTURA DEL GPS EN SEGUNDO PLANO
     function procesarCoordenadas() {
         const parametrosActuales = window.location.search;
 
@@ -184,7 +184,6 @@
         historial.forEach(item => {
             const div = document.createElement("div");
             div.className = "item-visita";
-            // Se concatena el número consecutivo al inicio de cada registro (ej: #1, #2)
             div.innerHTML = `
                 <div>
                     <span class="consecutivo-num">#${item.numeroConsecutivo}</span>
@@ -198,6 +197,17 @@
 
     function reiniciarContador() {
         if(confirm("¿Quieres borrar el conteo e historial completo de nombres del teléfono?")) {
-localStorage.setItem("visitas_conteo", 0);localStorage.setItem("visitas_historial", JSON.stringify([]));document.getElementById("badge-total").innerText = 0;visitas = 0;historial = [];renderizarHistorial();}}window.onload = procesarCoordenadas;
+            localStorage.setItem("visitas_conteo", 0);
+            localStorage.setItem("visitas_historial", JSON.stringify([]));
+document.getElementById("badge-total").innerText = 0;
+            visitas = 0;
+            historial = [];
+            renderizarHistorial();
+        }
+    }
+window.onload = procesarCoordenadas;
+
+
+
 
         
