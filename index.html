@@ -20,42 +20,59 @@
 <body>
 
 <div class="card">
-    <!-- El recuadro del contador ahora es azul y muy visible -->
     <div class="contador-box">
         <span id="num-visitas" class="numero">0</span>
-        <span class="label">Visitas enviadas hoy</span>
+        <span class="label">Visitas en este turno</span>
     </div>
     
-    <h2>Ubicación Lista</h2>
-    <p>Presiona el botón de abajo para registrar tu visita actual con coordenadas en tiempo real.</p>
+    <h2>Ubicación Ready</h2>
+    <p>Presiona el botón para abrir el formulario y registrar tus coordenadas en tiempo real.</p>
     
-    <!-- El usuario debe presionar este botón para ir a Tally; esto asegura que vea el contador -->
     <button class="btn" id="btn-enviar" onclick="avanzarATally()">📝 ABRIR FORMULARIO</button>
     
     <br>
-    <button class="btn-reset" onclick="reiniciarContador()">Reiniciar contador diario a 0</button>
+    <button class="btn-reset" onclick="reiniciarContador()">Reiniciar contador manual a 0</button>
 </div>
 
 <script>
     // ⚠️ REEMPLAZA ESTE ENLACE CON TU ENLACE REAL DE TALLY
     const TALLY_URL = "https://tally.so/r/obqGae";
     
-    // Variables globales para almacenar la ruta calculada
     let urlDestinoFinal = TALLY_URL;
 
-    // 1. CONTROL DE VISITAS DIARIAS (LocalStorage)
-    const fechaHoy = new Date().toLocaleDateString();
-    let visitas = localStorage.getItem("visitas_conteo") ? parseInt(localStorage.getItem("visitas_conteo")) : 0;
-    let ultimaFecha = localStorage.getItem("visitas_fecha");
+    // 1. LÓGICA DE DÍA OPERATIVO (Corte exacto a las 2:30 PM)
+    function obtenerDiaOperativo() {
+        const ahora = new Date();
+        const horaActual = ahora.getHours();
+        const minutosActuales = ahora.getMinutes();
 
-    // Si es un día nuevo, se pone en cero automáticamente
-    if (ultimaFecha !== fechaHoy) {
-        visitas = 0;
-        localStorage.setItem("visitas_conteo", 0);
-        localStorage.setItem("visitas_fecha", fechaHoy);
+        // Convertimos el tiempo actual a minutos totales transcurridos en el día
+        const tiempoActualEnMinutos = (horaActual * 60) + minutosActuales;
+        
+        // 2:30 PM equivale a 14 horas * 60 minutos + 30 minutos = 870 minutos
+        const tiempoCorteEnMinutos = (14 * 60) + 30;
+
+        // Si la hora del teléfono está antes de las 2:30 PM (870 min), pertenece al turno del día anterior
+        if (tiempoActualEnMinutos < tiempoCorteEnMinutos) {
+            ahora.setDate(ahora.getDate() - 1);
+        }
+        
+        // Retorna la fecha del día operativo correspondiente en formato de texto limpio
+        return ahora.toLocaleDateString();
     }
 
-    // Dibujar el número actual en la tarjeta al cargar la página
+    const diaOperativoActual = obtenerDiaOperativo();
+    let visitas = localStorage.getItem("visitas_conteo") ? parseInt(localStorage.getItem("visitas_conteo")) : 0;
+    let ultimoDiaOperativo = localStorage.getItem("visitas_dia_operativo");
+
+    // Si entramos a un nuevo ciclo (pasaron las 2:30 PM del día actual), se reinicia a 0
+    if (ultimoDiaOperativo !== diaOperativoActual) {
+        visitas = 0;
+        localStorage.setItem("visitas_conteo", 0);
+        localStorage.setItem("visitas_dia_operativo", diaOperativoActual);
+    }
+
+    // Mostrar el número actualizado en el recuadro azul
     document.getElementById("num-visitas").innerText = visitas;
 
     // 2. CAPTURA DEL GPS EN SEGUNDO PLANO
@@ -76,7 +93,6 @@
                         urlCalculada += `&${limpio}`;
                     }
                     
-                    // Guardamos la URL lista en la variable global
                     urlDestinoFinal = urlCalculada;
                 },
                 (error) => {
@@ -92,27 +108,23 @@
 
     // 3. ACCIÓN AL PRESIONAR EL BOTÓN
     function avanzarATally() {
-        // Bloqueamos el botón para evitar doble envío accidental
         document.getElementById("btn-enviar").disabled = true;
         document.getElementById("btn-enviar").innerText = "Cargando...";
 
-        // Sumamos 1 al contador local
         visitas++;
         localStorage.setItem("visitas_conteo", visitas);
         
-        // Redirigimos al formulario con los datos acoplados
         window.location.href = urlDestinoFinal;
     }
 
     function reiniciarContador() {
-        if(confirm("¿Quieres reiniciar el contador de hoy a 0?")) {
+        if(confirm("¿Quieres reiniciar el contador actual a 0?")) {
             localStorage.setItem("visitas_conteo", 0);
             document.getElementById("num-visitas").innerText = 0;
             visitas = 0;
         }
     }
 
-    // Iniciar cálculo del GPS de forma silenciosa al abrir la web
     window.onload = procesarCoordenadas;
 </script>
 
