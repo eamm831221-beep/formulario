@@ -7,17 +7,25 @@
     <style>
         body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background-color: #f0f4f8; padding: 20px; box-sizing: border-box; }
         .card { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); text-align: center; max-width: 360px; width: 100%; }
-        h2 { color: #1e293b; margin-top: 0; font-size: 18px; }
+        h2 { color: #1e293b; margin-top: 0; font-size: 18px; margin-bottom: 5px; }
         p { color: #64748b; font-size: 13px; margin-bottom: 15px; line-height: 1.4; }
         .contador-box { background-color: #2563eb; padding: 15px; border-radius: 12px; margin-bottom: 15px; color: white; box-shadow: 0 4px 12px rgba(37,99,235,0.2); }
         .numero { font-size: 48px; font-weight: bold; display: block; line-height: 1; margin-bottom: 5px; }
         .label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; font-weight: bold; opacity: 0.9; }
+        
+        /* Estilos de los 3 cuadros de texto */
+        .input-group { margin-bottom: 15px; text-align: left; }
+        .input-label { font-size: 11px; font-weight: bold; color: #475569; text-transform: uppercase; margin-bottom: 4px; display: block; }
+        .input-box { width: 100%; padding: 11px; border: 2px solid #cbd5e1; border-radius: 10px; font-size: 14px; box-sizing: border-box; color: #1e293b; font-weight: 500; }
+        .input-box:focus { border-color: #2563eb; outline: none; }
+        
         .btn { display: inline-block; width: 100%; padding: 14px; background-color: #0f172a; color: white; border: none; border-radius: 10px; font-size: 15px; font-weight: bold; cursor: pointer; margin-top: 5px; }
         .btn:active { background-color: #1e293b; }
         .historial-box { margin-top: 20px; text-align: left; max-height: 180px; overflow-y: auto; border-top: 1px solid #e2e8f0; padding-top: 15px; }
         .historial-titulo { font-size: 12px; font-weight: bold; color: #475569; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
-        .item-visita { font-size: 13px; color: #334155; padding: 6px 0; border-bottom: 1px dashed #e2e8f0; display: flex; justify-content: space-between; }
-        .item-hora { color: #94a3b8; font-weight: bold; }
+        .item-visita { font-size: 12px; color: #334155; padding: 6px 0; border-bottom: 1px dashed #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
+        .item-nombre-completo { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 80%; }
+        .item-hora { color: #94a3b8; font-weight: bold; font-size: 11px; }
         .btn-reset { background: none; border: none; color: #94a3b8; font-size: 11px; text-decoration: underline; cursor: pointer; margin-top: 15px; }
     </style>
 </head>
@@ -29,17 +37,28 @@
         <span class="label">Visitas en este turno</span>
     </div>
     
-    <h2>Ubicación Lista</h2>
-    <p>Presiona el botón para abrir el formulario y registrar tus coordenadas en tiempo real.</p>
+    <h2>Datos del Entrevistado</h2>
+    <p>Completa los campos obligatorios para activar el GPS y abrir el cuestionario.</p>
+    
+    <!-- Bloque de 3 casillas -->
+    <div class="input-group">
+        <label class="input-label">Nombre(s):</label>
+        <input type="text" id="int-nombre" class="input-box" placeholder="Ej. María del Carmen" autocomplete="off">
+    </div>
+    <div class="input-group">
+        <label class="input-label">Apellido Paterno:</label>
+        <input type="text" id="int-paterno" class="input-box" placeholder="Ej. Gómez" autocomplete="off">
+    </div>
+    <div class="input-group">
+        <label class="input-label">Apellido Materno:</label>
+        <input type="text" id="int-materno" class="input-box" placeholder="Ej. López" autocomplete="off">
+    </div>
     
     <button class="btn" id="btn-enviar" onclick="avanzarATally()">📝 ABRIR FORMULARIO</button>
     
-    <!-- Sección de historial personal -->
     <div class="historial-box">
-        <div class="historial-titulo">📋 Historial de visitas (Turno actual)</div>
-        <div id="lista-visitas">
-            <!-- Los registros se inyectarán aquí con JavaScript -->
-        </div>
+        <div class="historial-titulo">📋 Entrevistados en este turno</div>
+        <div id="lista-visitas"></div>
     </div>
     
     <br>
@@ -52,7 +71,7 @@
     
     let urlDestinoFinal = TALLY_URL;
 
-    // 1. LÓGICA DE DÍA OPERATIVO Y CORTE (A las 2:30 PM)
+    // LÓGICA DE DÍA OPERATIVO Y CORTE (Corte a las 2:30 PM)
     function obtenerDiaOperativo() {
         const ahora = new Date();
         const tiempoActualEnMinutos = (ahora.getHours() * 60) + ahora.getMinutes();
@@ -69,7 +88,6 @@
     let ultimoDiaOperativo = localStorage.getItem("visitas_dia_operativo");
     let historial = localStorage.getItem("visitas_historial") ? JSON.parse(localStorage.getItem("visitas_historial")) : [];
 
-    // Si cambió el turno operativo (pasaron las 2:30 PM), el contador e historial se limpian automáticamente
     if (ultimoDiaOperativo !== diaOperativoActual) {
         visitas = 0;
         historial = [];
@@ -78,11 +96,10 @@
         localStorage.setItem("visitas_dia_operativo", diaOperativoActual);
     }
 
-    // Dibujar datos actuales en la pantalla
     document.getElementById("num-visitas").innerText = visitas;
     renderizarHistorial();
 
-    // 2. CAPTURA DEL GPS EN SEGUNDO PLANO
+    // CAPTURA DEL GPS EN SEGUNDO PLANO
     function procesarCoordenadas() {
         const parametrosActuales = window.location.search;
 
@@ -112,50 +129,60 @@
         }
     }
 
-    // 3. ACCIÓN AL ENVIAR Y GUARDAR REGISTRO LOCAL
+    // ACCIÓN AL PRESIONAR EL BOTÓN
     function avanzarATally() {
-        // Extrae el municipio de la URL (?municipio=Tlahualilo) para guardarlo en el historial
-        const urlParams = new URLSearchParams(window.location.search);
-        const muniDetectado = urlParams.get('municipio') || "Desconocido";
+        const nom = document.getElementById("int-nombre").value.trim();
+        const pat = document.getElementById("int-paterno").value.trim();
+        const mat = document.getElementById("int-materno").value.trim();
         
-        // Obtiene la hora actual del registro (HH:MM)
+        // Validación obligatoria: Exigir por lo menos nombre y apellido paterno
+        if (nom === "" || pat === "") {
+            alert("Por favor, ingresa el Nombre y el Apellido Paterno obligatoriamente.");
+            return;
+        }
+        
         const ahora = new Date();
         const horaTexto = ahora.getHours().toString().padStart(2, '0') + ":" + ahora.getMinutes().toString().padStart(2, '0');
 
-        // Suma al contador
         visitas++;
         localStorage.setItem("visitas_conteo", visitas);
 
-        // Agrega el nuevo registro al inicio del historial
-        historial.unshift({ municipio: muniDetectado, hora: horaTexto });
+        // Construir el nombre completo para el diseño de la lista inferior
+        const nombreCompletoHistorial = `${nom} ${pat} ${mat}`.trim();
+        historial.unshift({ nombreVisual: nombreCompletoHistorial, hora: horaTexto });
         localStorage.setItem("visitas_historial", JSON.stringify(historial));
+
+        // INYECCIÓN DINÁMICA DE PARÁMETROS HACIA TALLY
+        let urlInyectada = urlDestinoFinal + `&nombre=${encodeURIComponent(nom)}&paterno=${encodeURIComponent(pat)}`;
+        if (mat !== "") {
+            urlInyectada += `&materno=${encodeURIComponent(mat)}`;
+        }
 
         document.getElementById("btn-enviar").disabled = true;
         document.getElementById("btn-enviar").innerText = "Cargando...";
         
-        window.location.href = urlDestinoFinal;
+        window.location.href = urlInyectada;
     }
 
-    // Función para pintar la lista de visitas en la pantalla
     function renderizarHistorial() {
         const contenedor = document.getElementById("lista-visitas");
         contenedor.innerHTML = "";
         
         if (historial.length === 0) {
-            contenedor.innerHTML = '<div style="font-size:12px; color:#94a3b8; text-align:center; padding:10px;">No hay registros en este turno.</div>';
+            contenedor.innerHTML = '<div style="font-size:12px; color:#94a3b8; text-align:center; padding:10px;">No hay entrevistas registradas.</div>';
             return;
         }
 
         historial.forEach(item => {
             const div = document.createElement("div");
             div.className = "item-visita";
-            div.innerHTML = `<span>📍 ${item.municipio}</span><span class="item-hora">${item.hora}</span>`;
+            div.innerHTML = `<span class="item-nombre-completo" title="${item.nombreVisual}">👤 ${item.nombreVisual}</span><span class="item-hora">${item.hora}</span>`;
             contenedor.appendChild(div);
         });
     }
 
     function reiniciarContador() {
-        if(confirm("¿Quieres borrar el conteo e historial actual a 0?")) {
+        if(confirm("¿Quieres borrar el conteo e historial completo de nombres?")) {
             localStorage.setItem("visitas_conteo", 0);
             localStorage.setItem("visitas_historial", JSON.stringify([]));
             document.getElementById("num-visitas").innerText = 0;
