@@ -5,33 +5,75 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cargando Formulario...</title>
     <style>
-        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background-color: #f9f9f9; }
-        .loader { text-align: center; color: #333; padding: 20px; }
+        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background-color: #f0f4f8; padding: 20px; box-sizing: border-box; }
+        .card { background: white; padding: 30px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); text-align: center; max-width: 360px; width: 100%; }
+        h2 { color: #1e293b; margin-top: 0; font-size: 20px; }
+        p { color: #64748b; font-size: 14px; margin-bottom: 20px; }
+        .contador-box { background-color: #e2e8f0; padding: 15px; border-radius: 12px; margin-bottom: 20px; }
+        .numero { font-size: 42px; font-weight: bold; color: #2563eb; display: block; }
+        .label { font-size: 12px; text-transform: uppercase; color: #475569; letter-spacing: 1px; font-weight: bold; }
+        .btn-reset { background: none; border: none; color: #94a3b8; font-size: 12px; text-decoration: underline; cursor: pointer; margin-top: 10px; }
+        .btn-reset:active { color: #64748b; }
     </style>
 </head>
 <body>
 
-<div class="loader">
+<div class="card">
+    <div class="contador-box">
+        <span id="num-visitas" class="numero">0</span>
+        <span class="label">Visitas registradas hoy</span>
+    </div>
+    
     <h2>Abriendo formulario seguro...</h2>
     <p>Capturando coordenadas GPS en tiempo real...</p>
+    
+    <button class="btn-reset" onclick="reiniciarContador()">Reiniciar contador a 0</button>
 </div>
 
 <script>
-    // ⚠️ REEMPLAZA ESTE ENLACE CON EL ENLACE REAL DE TU FORMULARIO DE TALLY (Debe incluir tu /r/XXXXXX)
-    const TALLY_URL = "https://tally.so/r/obqGae";
+    // ⚠️ COLOCA TU ENLACE REAL DE TALLY AQUÍ
+    const TALLY_URL = "https://tally.so";
 
+    // 1. LÓGICA DEL CONTADOR DIARIO (Local Storage)
+    const fechaHoy = new Date().toLocaleDateString(); // Obtiene la fecha actual (DD/MM/AAAA)
+    let visitas = localStorage.getItem("visitas_conteo") ? parseInt(localStorage.getItem("visitas_conteo")) : 0;
+    let ultimaFecha = localStorage.getItem("visitas_fecha");
+
+    // Si cambió el día, el contador se reinicia automáticamente a cero
+    if (ultimaFecha !== fechaHoy) {
+        visitas = 0;
+        localStorage.setItem("visitas_conteo", 0);
+        localStorage.setItem("visitas_fecha", fechaHoy);
+    }
+
+    // Muestra el número actual en la pantalla
+    document.getElementById("num-visitas").innerText = visitas;
+
+    function registrarYRedirigir(url) {
+        // Suma 1 al contador justo antes de saltar a Tally
+        visitas++;
+        localStorage.setItem("visitas_conteo", visitas);
+        window.location.href = url;
+    }
+
+    function reiniciarContador() {
+        if(confirm("¿Seguro que quieres reiniciar el contador del día a 0?")) {
+            localStorage.setItem("visitas_conteo", 0);
+            document.getElementById("num-visitas").innerText = 0;
+            visitas = 0;
+        }
+    }
+
+    // 2. CAPTURA DE GPS ORIGINAL (Ultra ligera)
     function obtenerUbicacion() {
-        // Captura automáticamente los parámetros de la URL (?municipio=Tlahualilo)
         const parametrosActuales = window.location.search; 
 
         if (navigator.geolocation) {
-            // getCurrentPosition se ejecuta UNA SOLA VEZ y no genera bucles de datos
             navigator.geolocation.getCurrentPosition(
                 (position) => {
                     const lat = position.coords.latitude;
                     const lon = position.coords.longitude;
                     
-                    // Une el GPS con tu formulario base agregando un número aleatorio para evitar caché
                     const cb = "nc=" + new Date().getTime();
                     let urlFinal = `${TALLY_URL}?lat=${lat}&lon=${lon}&${cb}`;
                     
@@ -40,25 +82,25 @@
                         urlFinal += `&${limpio}`;
                     }
                     
-                    // Salta a Tally inmediatamente y destruye esta pestaña puente
-                    window.location.href = urlFinal;
+                    // Espera un segundo visible para que el usuario alcance a ver su conteo y salta
+                    setTimeout(() => { registrarYRedirigir(urlFinal); }, 1200);
                 },
                 (error) => {
-                    // Si el GPS tarda o falla, redirige de inmediato para no gastar datos intentando conectarse
                     console.warn("Fallo de GPS:", error.message);
-                    window.location.href = parametrosActuales ? `${TALLY_URL}${parametrosActuales}` : TALLY_URL;
+                    const urlFallo = parametrosActuales ? `${TALLY_URL}${parametrosActuales}` : TALLY_URL;
+                    registrarYRedirigir(urlFallo);
                 },
-                { enableHighAccuracy: true, timeout: 6000, maximumAge: 60000 } // Permite usar un GPS fresco de hasta 1 minuto atrás para ahorrar internet y batería
+                { enableHighAccuracy: true, timeout: 6000, maximumAge: 60000 }
             );
         } else {
-            window.location.href = parametrosActuales ? `${TALLY_URL}${parametrosActuales}` : TALLY_URL;
+            const urlSinGPS = parametrosActuales ? `${TALLY_URL}${parametrosActuales}` : TALLY_URL;
+            registrarYRedirigir(urlSinGPS);
         }
     }
 
-    // Se ejecuta estrictamente una sola vez al cargar la página
+    // Iniciar el proceso automáticamente al cargar la página
     window.onload = obtenerUbicacion;
 </script>
 
 </body>
 </html>
-
