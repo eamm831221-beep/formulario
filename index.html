@@ -5,31 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Punto de Control GPS</title>
     <style>
-        /* Regreso al diseño de tarjeta original con acentos en color guinda */
         body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background-color: #f0f4f8; padding: 20px; box-sizing: border-box; }
         .card { background: white; padding: 30px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); text-align: center; max-width: 380px; width: 100%; box-sizing: border-box; }
-        
-        /* Contador destacado en fondo guinda institucional */
         .contador-box { background-color: #6b1d2f; padding: 15px; border-radius: 12px; margin-bottom: 20px; color: white; box-shadow: 0 4px 12px rgba(107,29,47,0.2); }
         .numero { font-size: 48px; font-weight: bold; display: block; line-height: 1; margin-bottom: 5px; }
         .label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; font-weight: bold; opacity: 0.9; }
-        
         h2 { color: #1e293b; margin-top: 0; font-size: 20px; }
         p { color: #64748b; font-size: 13px; margin-bottom: 20px; line-height: 1.4; }
-        
         .input-group { margin-bottom: 15px; text-align: left; }
         .input-label { font-size: 11px; font-weight: bold; color: #475569; text-transform: uppercase; margin-bottom: 4px; display: block; }
         .input-box { width: 100%; padding: 11px; border: 2px solid #cbd5e1; border-radius: 10px; font-size: 14px; box-sizing: border-box; color: #1e293b; font-weight: 500; }
         .input-box:focus { border-color: #6b1d2f; outline: none; }
-        
-        /* Botón principal en color guinda */
-        .btn { display: inline-block; width: 100%; padding: 14px; background-color: #6b1d2f; color: white; border: none; border-radius: 10px; font-size: 15px; font-weight: bold; cursor: pointer; margin-top: 5px; box-shadow: 0 4px 12px rgba(107,29,47,0.15); transition: background 0.2s; }
+        .btn { display: inline-block; width: 100%; padding: 14px; background-color: #6b1d2f; color: white; border: none; border-radius: 10px; font-size: 15px; font-weight: bold; cursor: pointer; margin-top: 5px; box-shadow: 0 4px 12px rgba(107,29,47,0.15); }
         .btn:active { background-color: #521422; }
-        
         .historial-box { margin-top: 20px; text-align: left; max-height: 180px; overflow-y: auto; border-top: 1px solid #e2e8f0; padding-top: 15px; }
-        .historial-titulo { font-size: 12px; font-weight: bold; color: #475569; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .historial-titulo { font-size: 12px; font-weight: bold; color: #475569; margin-bottom: 8px; text-transform: uppercase; }
         .item-visita { font-size: 13px; color: #334155; padding: 6px 0; border-bottom: 1px dashed #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
-        
         .consecutivo-num { font-weight: bold; color: #6b1d2f; margin-right: 6px; }
         .item-nombre-completo { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 80%; }
         .item-hora { color: #94a3b8; font-weight: bold; font-size: 11px; }
@@ -70,20 +61,15 @@
     <br>
     <button class="btn-reset" onclick="reiniciarContador()">Reiniciar historial manual</button>
 </div>
+
 <script>
     const TALLY_URL = "https://tally.so/r/obqGae"; 
-    
     let urlDestinoFinal = TALLY_URL;
 
-    // LÓGICA DE DÍA OPERATIVO Y CORTE (Corte a las 2:30 PM)
+    // Corte a las 2:30 PM de México
     function obtenerDiaOperativo() {
         const ahora = new Date();
-        const tiempoActualEnMinutos = (ahora.getHours() * 60) + ahora.getMinutes();
-        const tiempoCorteEnMinutos = (14 * 60) + 30; // 14:30 hrs
-
-        if (tiempoActualEnMinutos < tiempoCorteEnMinutos) {
-            ahora.setDate(ahora.getDate() - 1);
-        }
+        if ((ahora.getHours() * 60) + ahora.getMinutes() < 870) { ahora.setDate(ahora.getDate() - 1); }
         return ahora.toLocaleDateString();
     }
 
@@ -93,8 +79,7 @@
     let historial = localStorage.getItem("visitas_historial") ? JSON.parse(localStorage.getItem("visitas_historial")) : [];
 
     if (ultimoDiaOperativo !== diaOperativoActual) {
-        visitas = 0;
-        historial = [];
+        visitas = 0; historial = [];
         localStorage.setItem("visitas_conteo", 0);
         localStorage.setItem("visitas_historial", JSON.stringify([]));
         localStorage.setItem("visitas_dia_operativo", diaOperativoActual);
@@ -103,50 +88,41 @@
     document.getElementById("num-visitas").innerText = visitas;
     renderizarHistorial();
 
-    // CAPTURA DEL GPS EN SEGUNDO PLANO
+    // EXTRACCIÓN ESTÁTICA (Se ejecuta UNA SOLA VEZ al cargar la web para no generar consumo infinito)
     function procesarCoordenadas() {
         const parametrosActuales = window.location.search;
-
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
                 (position) => {
                     const lat = position.coords.latitude;
                     const lon = position.coords.longitude;
-                    
                     const cb = "nc=" + new Date().getTime();
                     let urlCalculada = `${TALLY_URL}?lat=${lat}&lon=${lon}&${cb}`;
-                    
                     if (parametrosActuales) {
-                        const limpio = parametrosActuales.replace('?', '');
-                        urlCalculada += `&${limpio}`;
+                        urlCalculada += `&${parametrosActuales.replace('?', '')}`;
                     }
                     urlDestinoFinal = urlCalculada;
                 },
                 (error) => {
-                    console.warn("Fallo de GPS:", error.message);
                     urlDestinoFinal = parametrosActuales ? `${TALLY_URL}${parametrosActuales}` : TALLY_URL;
                 },
-                { enableHighAccuracy: true, timeout: 6000, maximumAge: 60000 }
+                { enableHighAccuracy: true, timeout: 6000, maximumAge: 60000 } // Máxima optimización de red
             );
-        } else {
-            urlDestinoFinal = parametrosActuales ? `${TALLY_URL}${parametrosActuales}` : TALLY_URL;
         }
     }
 
-    // ACCIÓN AL PRESIONAR EL BOTÓN
     function avanzarATally() {
         const nom = document.getElementById("int-nombre").value.trim();
         const pat = document.getElementById("int-paterno").value.trim();
         const mat = document.getElementById("int-materno").value.trim();
         
         if (nom === "" || pat === "") {
-            alert("Por favor, ingresa el Nombre y el Apellido Paterno obligatoriamente.");
+            alert("Por favor, ingresa el Nombre y el Apellido Paterno.");
             return;
         }
         
         const ahora = new Date();
         const horaTexto = ahora.getHours().toString().padStart(2, '0') + ":" + ahora.getMinutes().toString().padStart(2, '0');
-
         visitas++;
         localStorage.setItem("visitas_conteo", visitas);
 
@@ -155,46 +131,34 @@
         localStorage.setItem("visitas_historial", JSON.stringify(historial));
 
         let urlInyectada = urlDestinoFinal + `&nombre=${encodeURIComponent(nom)}&paterno=${encodeURIComponent(pat)}`;
-        if (mat !== "") {
-            urlInyectada += `&materno=${encodeURIComponent(mat)}`;
-        }
+        if (mat !== "") { urlInyectada += `&materno=${encodeURIComponent(mat)}`; }
 
         document.getElementById("btn-enviar").disabled = true;
         document.getElementById("btn-enviar").innerText = "Cargando...";
-        
         window.location.href = urlInyectada;
     }
 
     function renderizarHistorial() {
         const contenedor = document.getElementById("lista-visitas");
         contenedor.innerHTML = "";
-        
         if (historial.length === 0) {
-            contenedor.innerHTML = '<div style="font-size:12px; color:#94a3b8; text-align:center; padding:10px;">No hay entrevistas registradas.</div>';
+            contenedor.innerHTML = '<div style="font-size:12px; color:#94a3b8; text-align:center; padding:10px;">No hay registros.</div>';
             return;
         }
-
         historial.forEach(item => {
             const div = document.createElement("div");
             div.className = "item-visita";
-            div.innerHTML = `
-                <span class="item-nombre-completo">
-                    <span class="consecutivo-num">#${item.numeroConsecutivo}</span>👤 ${item.nombreVisual}
-                </span>
-                <span class="item-hora">${item.hora}</span>
-            `;
+            div.innerHTML = `<span class="item-nombre-completo"><span class="consecutivo-num">#${item.numeroConsecutivo}</span>👤 ${item.nombreVisual}</span><span class="item-hora">${item.hora}</span>`;
             contenedor.appendChild(div);
         });
     }
 
     function reiniciarContador() {
-        if(confirm("¿Quieres borrar el conteo e historial completo de nombres?")) {
+        if(confirm("¿Quieres borrar el historial?")) {
             localStorage.setItem("visitas_conteo", 0);
             localStorage.setItem("visitas_historial", JSON.stringify([]));
             document.getElementById("num-visitas").innerText = 0;
-            visitas = 0;
-            historial = [];
-            renderizarHistorial();
+            visitas = 0; historial = []; renderizarHistorial();
         }
     }
 
@@ -203,5 +167,3 @@
 </body>
 </html>
 
-
-    
